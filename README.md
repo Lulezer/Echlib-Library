@@ -30,3 +30,40 @@ Features include:
 *Future Vision:*
 
 - This library might evolve into a game engine one day. Becouse of that more advanced features could be reserved for the engine.
+
+
+
+# How to install:
+
+1. Download The Zip from the releases: https://github.com/Lulezer/Echlib-Library/releases
+2: Extract the Zip file into a folder in your computer.
+3: Open the folder and Drag everything from (Include, src) and put them in an ide of your choice.
+4: After that all you need to do is link the echlib.h raudio.....
+5: After you have linked Everything you can now start coding!
+
+
+
+**OR**
+
+
+- You can download These Templates
+
+- Visual Studio 2022: https://github.com/Lulezer/Echlib-VisualStudio2022-Template
+  Once you downloaded it just extract it somewhere on your computer and then right click on the folder and press
+  open with visual studio.
+
+
+
+
+Credits:
+
+Thanks to MrLLGD for helping me setup the project with cmake and other problems. His channel:
+https://www.youtube.com/@lowlevelgamedev9330/videos
+
+Thanks to Ray for making Raudio and also thanks to whoever contributored to help him make Raudio. His github page:
+
+https://github.com/raysan5
+
+ 
+
+
