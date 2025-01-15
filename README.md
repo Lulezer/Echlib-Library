@@ -1,8 +1,8 @@
 # Echlib 
 
-A libary made to Help People start Making Games
+A library made to Help People start Making Games
 
-An easy and OpenSource GameDev Libary
+An easy and OpenSource GameDev library
 
 Feutures include:
 
