@@ -1,6 +1,6 @@
 # Echlib 
 
-A library made to help people start making games.
+A C-C++ library made to help people start making games.
 An easy and open-source game development library.
 
 
