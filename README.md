@@ -21,5 +21,8 @@ Feutures include:
 - Cross-Platform Support (Future Consideration)
 
 
-# STILL IN DEVELOPMENT NOT EVERYTHHING IS STILL BEING IMPLEMENTED NOT ALL FEUTURES MIGHT BE IMPLEMENTED
-# OTHER FEUTURES MIGHT ALSO BE IMPLEMENTEFD 
+
+#Note:
+- Stll in Development not everything will be implemented.
+- Not all feutures will be implemented.
+- Other feutures might also be implemented 
