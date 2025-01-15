@@ -36,9 +36,13 @@ Features include:
 # How to install:
 
 1. Download The Zip from the releases: https://github.com/Lulezer/Echlib-Library/releases
+
 2: Extract the Zip file into a folder in your computer.
+
 3: Open the folder and Drag everything from (Include, src) and put them in an ide of your choice.
+
 4: After that all you need to do is link the echlib.h raudio.....
+
 5: After you have linked Everything you can now start coding!
 
 
