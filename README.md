@@ -22,7 +22,7 @@ Feutures include:
 
 
 
-#Note:
+*Note:*
 - Stll in Development not everything will be implemented.
-- Not all feutures will be implemented.
+- Not all feutures might be implemented some might be scarped for later or never added.
 - Other feutures might also be implemented 
