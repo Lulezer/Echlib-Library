@@ -55,7 +55,7 @@ Features include:
 
 
 
-Credits:
+# Credits:
 
 Thanks to MrLLGD for helping me setup the project with cmake and other problems. His channel:
 https://www.youtube.com/@lowlevelgamedev9330/videos
