@@ -1,0 +1,139 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Rendering\\Square\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Rendering\\Square\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Rendering\\Tringle\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Rendering\\Tringle\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Window\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Window\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Audio\\PlayAudio\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Audio\\PlayAudio\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Audio\\Audio \u002B Input\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Audio\\Audio \u002B Input\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Input\\Holding a Key\\main.cpp||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Input\\Holding a Key\\main.cpp||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Input\\Pressing a key\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Input\\Pressing a key\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Rendering\\Square\\main.cpp",
+              "RelativeDocumentMoniker": "Rendering\\Square\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Rendering\\Square\\main.cpp",
+              "RelativeToolTip": "Rendering\\Square\\main.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T13:24:16.927Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Rendering\\Tringle\\main.cpp",
+              "RelativeDocumentMoniker": "Rendering\\Tringle\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Rendering\\Tringle\\main.cpp",
+              "RelativeToolTip": "Rendering\\Tringle\\main.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T13:18:56.114Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Audio\\PlayAudio\\main.cpp",
+              "RelativeDocumentMoniker": "Audio\\PlayAudio\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Audio\\PlayAudio\\main.cpp",
+              "RelativeToolTip": "Audio\\PlayAudio\\main.cpp",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAAB8AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T13:16:58.521Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Audio\\Audio \u002B Input\\main.cpp",
+              "RelativeDocumentMoniker": "Audio\\Audio \u002B Input\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Audio\\Audio \u002B Input\\main.cpp",
+              "RelativeToolTip": "Audio\\Audio \u002B Input\\main.cpp",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAADkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T13:14:43.388Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Input\\Holding a Key\\main.cpp",
+              "RelativeDocumentMoniker": "Input\\Holding a Key\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Input\\Holding a Key\\main.cpp",
+              "RelativeToolTip": "Input\\Holding a Key\\main.cpp",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAABQAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T09:27:57.383Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Input\\Pressing a key\\main.cpp",
+              "RelativeDocumentMoniker": "Input\\Pressing a key\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Input\\Pressing a key\\main.cpp",
+              "RelativeToolTip": "Input\\Pressing a key\\main.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T09:27:51.47Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "main.cpp",
+              "DocumentMoniker": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Window\\main.cpp",
+              "RelativeDocumentMoniker": "Window\\main.cpp",
+              "ToolTip": "D:\\Coding\\Echlib\\Echlib libary\\Echlib-Libary\\Examples\\Window\\main.cpp",
+              "RelativeToolTip": "Window\\main.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-15T09:13:30.252Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
