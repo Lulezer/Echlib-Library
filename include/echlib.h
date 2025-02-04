@@ -3,11 +3,38 @@
 
 #include <GLFW/glfw3.h>
 #include <raudio.h>
+#include <string>
+#include <glad/glad.h>
+#include <vector>
+#include <stb_truetype/stb_truetype.h>
+
+#define FONT_BITMAP_WIDTH 1024
+#define FONT_BITMAP_HEIGHT 1024
+
+struct FontChar {
+	float advanceX;
+	float offsetX;
+	float offsetY;
+	float x0, y0;
+	float x1, y1;
+};
+
+class Font {
+public:
+	GLuint textureID;  // The OpenGL texture ID for the font texture
+	GLuint vao;        // The vertex array object for text rendering
+	GLuint vbo;        // The vertex buffer object for text rendering
+	GLuint ebo;        // The element buffer object for text rendering (optional, but could be useful for optimization)
+
+	std::vector<unsigned char> fontBuffer;  // The raw font data
+	stbtt_fontinfo info;                   // Font info struct from stb_truetype
+	std::vector<unsigned char> bitmap;     // Bitmap for the font
+	std::vector<FontChar> chars;           // Array of character data
+
+	// Constructor, destructor, or other methods can be added here
+};
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Colors
 #define RED 1.0f, 0.0f, 0.0f, 1.0f
@@ -30,29 +57,7 @@ extern "C" {
 #define LIGHT_CORAL 0.941f, 0.502f, 0.502f, 1.0f
 
 
-// Keys
-#define KEY_UNKNOWN GLFW_KEY_UNKNOWN
-#define KEY_SPACE GLFW_KEY_SPACE
-#define KEY_APOSTROPHE GLFW_KEY_APOSTROPHE
-#define KEY_COMMA GLFW_KEY_COMMA
-#define KEY_MINUS GLFW_KEY_MINUS
-#define KEY_PERIOD GLFW_KEY_PERIOD
-#define KEY_SLASH GLFW_KEY_SLASH
-#define KEY_0 GLFW_KEY_0
-#define KEY_1 GLFW_KEY_1
-#define KEY_2 GLFW_KEY_2
-#define KEY_3 GLFW_KEY_3
-#define KEY_4 GLFW_KEY_4
-#define KEY_5 GLFW_KEY_5
-#define KEY_6 GLFW_KEY_6
-#define KEY_7 GLFW_KEY_7
-#define KEY_8 GLFW_KEY_8
-#define KEY_9 GLFW_KEY_9
-#define KEY_SEMICOLON GLFW_KEY_SEMICOLON
-#define KEY_EQUAL GLFW_KEY_EQUAL
-#define KEY_A GLFW_KEY_A
-#define KEY_B GLFW_KEY_B
-#define KEY_C GLFW_KEY_C
+
 #define KEY_D GLFW_KEY_D
 #define KEY_E GLFW_KEY_E
 #define KEY_F GLFW_KEY_F
@@ -159,9 +164,14 @@ extern "C" {
 #define KEY_RIGHT_SUPER GLFW_KEY_RIGHT_SUPER
 #define KEY_MENU GLFW_KEY_MENU
 
-// Functions
 
-	//	Window Managment
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+	// Functions
+	// Window Management
 	void MakeWindow(int width, int height, const char* title);
 	void CloseWindow();
 	int WindowShouldClose();
@@ -170,16 +180,20 @@ extern "C" {
 	void ClearBackground(float r, float g, float b, float a);
 	void SetTargetFps(int targetFps);
 
-
-	//	Shape Rendering
+	// Shape Rendering
 	void DrawTriangle(float x, float y, float width, float height, float r, float g, float b, float a);
-	void DrawSquare(float x, float y, float width, float height, float r, float g, float b, float a);
+	void DrawRectangle(float x, float y, float width, float height, float r, float g, float b, float a);
 
-	//	Input System
+	// Input System
 	int IsKeyPressed(int key);
 	int IsKeyHeld(int key);
 
-	
+	// Text Rendering
+
+	bool LoadFont(Font& font, const char* fontPath, float fontSize);
+	void DrawText(Font& font, const std::string& text, float x, float y);
+
+
 #ifdef __cplusplus
 }
 #endif
