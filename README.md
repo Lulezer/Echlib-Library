@@ -64,7 +64,7 @@ Features include:
 Thanks to MrLLGD for helping me setup the project with cmake and other problems. His channel:
 https://www.youtube.com/@lowlevelgamedev9330/videos
 
-Thanks to Ray for making Raudio and also thanks to whoever contributored to help him make Raudio. His github page:
+Thanks to Ray for making Raudio. His github page:
 
 https://github.com/raysan5
 
