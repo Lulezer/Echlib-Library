@@ -4,60 +4,86 @@
 #include <GLFW/glfw3.h>
 #include <raudio.h>
 #include <string>
+#include <unordered_map>
 #include <glad/glad.h>
 #include <vector>
-#include <stb_truetype/stb_truetype.h>
+#include <array>
+#include <iostream>
+#include "stb_truetype/stb_truetype.h"
+#include <stb_image/stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#define FONT_BITMAP_WIDTH 1024
-#define FONT_BITMAP_HEIGHT 1024
-
-struct FontChar {
-	float advanceX;
-	float offsetX;
-	float offsetY;
-	float x0, y0;
-	float x1, y1;
-};
-
-class Font {
-public:
-	GLuint textureID;  // The OpenGL texture ID for the font texture
-	GLuint vao;        // The vertex array object for text rendering
-	GLuint vbo;        // The vertex buffer object for text rendering
-	GLuint ebo;        // The element buffer object for text rendering (optional, but could be useful for optimization)
-
-	std::vector<unsigned char> fontBuffer;  // The raw font data
-	stbtt_fontinfo info;                   // Font info struct from stb_truetype
-	std::vector<unsigned char> bitmap;     // Bitmap for the font
-	std::vector<FontChar> chars;           // Array of character data
-
-	// Constructor, destructor, or other methods can be added here
-};
+#define FONT_BITMAP_WIDTH 512
+#define FONT_BITMAP_HEIGHT 512
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Colors
-#define RED 1.0f, 0.0f, 0.0f, 1.0f
-#define GREEN 0.0f, 1.0f, 0.0f, 1.0f
-#define BLUE 0.0f, 0.0f, 1.0f, 1.0f
-#define WHITE 1.0f, 1.0f, 1.0f, 1.0f
-#define BLACK 0.0f, 0.0f, 0.0f, 1.0f
-#define GRAY 0.5f, 0.5f, 0.5f, 1.0f
-#define YELLOW 1.0f, 1.0f, 0.0f, 1.0f
-#define CYAN 0.0f, 1.0f, 1.0f, 1.0f
-#define MAGENTA 1.0f, 0.0f, 1.0f, 1.0f
-#define ORANGE 1.0f, 0.647f, 0.0f, 1.0f
-#define PURPLE 0.5f, 0.0f, 0.5f, 1.0f
-#define PINK 1.0f, 0.75f, 0.796f, 1.0f
-#define BROWN 0.545f, 0.298f, 0.149f, 1.0f
-#define LIGHT_BLUE 0.678f, 0.847f, 0.902f, 1.0f
-#define BEIGE 0.827f, 0.690f, 0.514f, 1.0f
-#define LIGHT_GREEN 0.565f, 0.933f, 0.565f, 1.0f
-#define DARK_GREEN 0.0f, 0.459f, 0.173f, 1.0f
-#define LIGHT_CORAL 0.941f, 0.502f, 0.502f, 1.0f
+    namespace ech {
+
+        extern int windowWidth;
+        extern int windowHeight;
+        extern float transparency;
+
+        // Define a Color struct
+        struct Color {
+            float r, g, b, a;
+        };
+
+        extern std::unordered_map<std::string, GLuint> textures;
+
+        enum class TextureType {
+            NEAREST = GL_NEAREST,
+            LINEAR = GL_LINEAR
+        };
 
 
 
+        // Define common colors
+        const Color WHITE = { 1.0f, 1.0f, 1.0f, transparency };   // Full white
+        const Color BLACK = { 0.0f, 0.0f, 0.0f, transparency };   // Full black
+        const Color RED = { 1.0f, 0.0f, 0.0f, transparency };     // Red
+        const Color GRAY = { 0.5f, 0.5f, 0.5f, transparency };    // Gray
+        const Color YELLOW = { 1.0f, 1.0f, 0.0f, transparency };  // Yellow
+        const Color CYAN = { 0.0f, 1.0f, 1.0f, transparency };    // Cyan
+        const Color MAGENTA = { 1.0f, 0.0f, 1.0f, transparency }; // Magenta
+        const Color ORANGE = { 1.0f, 0.647f, 0.0f, transparency }; // Orange
+        const Color PURPLE = { 0.5f, 0.0f, 0.5f, transparency };  // Purple
+        const Color PINK = { 1.0f, 0.75f, 0.796f, transparency }; // Pink
+        const Color BROWN = { 0.545f, 0.298f, 0.149f, transparency }; // Brown
+        const Color LIGHT_BLUE = { 0.678f, 0.847f, 0.902f, transparency }; // Light Blue
+        const Color BEIGE = { 0.827f, 0.690f, 0.514f, 1.0f }; // Beige
+        const Color LIGHT_GREEN = { 0.565f, 0.933f, 0.565f, transparency }; // Light Green
+        const Color DARK_GREEN = { 0.0f, 0.459f, 0.173f, transparency };  // Dark Green
+        const Color LIGHT_CORAL = { 0.941f, 0.502f, 0.502f, transparency }; // Light Coral
+
+        // Keys (key codes)
+#define KEY_UNKNOWN GLFW_KEY_UNKNOWN
+#define KEY_SPACE GLFW_KEY_SPACE
+#define KEY_APOSTROPHE GLFW_KEY_APOSTROPHE
+#define KEY_COMMA GLFW_KEY_COMMA
+#define KEY_MINUS GLFW_KEY_MINUS
+#define KEY_PERIOD GLFW_KEY_PERIOD
+#define KEY_SLASH GLFW_KEY_SLASH
+#define KEY_0 GLFW_KEY_0
+#define KEY_1 GLFW_KEY_1
+#define KEY_2 GLFW_KEY_2
+#define KEY_3 GLFW_KEY_3
+#define KEY_4 GLFW_KEY_4
+#define KEY_5 GLFW_KEY_5
+#define KEY_6 GLFW_KEY_6
+#define KEY_7 GLFW_KEY_7
+#define KEY_8 GLFW_KEY_8
+#define KEY_9 GLFW_KEY_9
+#define KEY_SEMICOLON GLFW_KEY_SEMICOLON
+#define KEY_EQUAL GLFW_KEY_EQUAL
+#define KEY_A GLFW_KEY_A
+#define KEY_B GLFW_KEY_B
+#define KEY_C GLFW_KEY_C
 #define KEY_D GLFW_KEY_D
 #define KEY_E GLFW_KEY_E
 #define KEY_F GLFW_KEY_F
@@ -164,35 +190,38 @@ public:
 #define KEY_RIGHT_SUPER GLFW_KEY_RIGHT_SUPER
 #define KEY_MENU GLFW_KEY_MENU
 
+// Functions
+// Function declarations
+        void MakeWindow(int width, int height, const char* title);
+        void CloseWindow();
+        int WindowShouldClose();
+        void StartDrawing();
+        void EndDrawing();
+        void ClearBackground(Color color);
+        void SetTargetFps(int targetFps);
+
+        // Shape Rendering
+        void DrawTriangle(float x, float y, float width, float height, const Color& color);
+        void DrawRectangle(float x, float y, float width, float height, const Color& color);
+        void DrawProRectangle(float x, float y, float width, float height, const Color& color, float angle, float transparency);
+        void DrawCircle(float centerX, float centerY, float radius, const Color& color, int segments = 36);
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+        // Input System
+        int IsKeyPressed(int key);
+        int IsKeyHeld(int key);
 
-	// Functions
-	// Window Management
-	void MakeWindow(int width, int height, const char* title);
-	void CloseWindow();
-	int WindowShouldClose();
-	void StartDrawing();
-	void EndDrawing();
-	void ClearBackground(float r, float g, float b, float a);
-	void SetTargetFps(int targetFps);
+        // Texture Rendering
+        void LoadTexture(const char* filepath, const std::string& name);
+        void DrawTexturedRectangle(float x, float y, float width, float height, const std::string& name);
 
-	// Shape Rendering
-	void DrawTriangle(float x, float y, float width, float height, float r, float g, float b, float a);
-	void DrawRectangle(float x, float y, float width, float height, float r, float g, float b, float a);
 
-	// Input System
-	int IsKeyPressed(int key);
-	int IsKeyHeld(int key);
+        float GetDeltaTime();
 
-	// Text Rendering
 
-	bool LoadFont(Font& font, const char* fontPath, float fontSize);
-	void DrawText(Font& font, const std::string& text, float x, float y);
+       
 
+    }
 
 #ifdef __cplusplus
 }
