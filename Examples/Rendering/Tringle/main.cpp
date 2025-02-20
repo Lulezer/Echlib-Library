@@ -10,21 +10,21 @@ int main()
 	int TringleHeight = 50; // Define a height for the Tringle
 
 
-	MakeWindow(WindowWidth, windowHeight, "Window example with echlib"); // Create the window
-	SetTargetFps(60); // You dont have to put this for the window to work but you should so that the game always run at 60fps.
+	ech::MakeWindow(WindowWidth, windowHeight, "Window example with echlib"); // Create the window
+	ech::SetTargetFps(60); // You dont have to put this for the window to work but you should so that the game always run at 60fps.
 
-	while (!WindowShouldClose())
+	while (!ech::WindowShouldClose())
 	{
-		StartDrawing();  // Start Drawing the window
+		ech::StartDrawing();  // Start Drawing the window
 
-		DrawTriangle(TringleX, TringleY, TringleWidth, TringleHeight, RED);
+		ech::DrawTriangle(TringleX, TringleY, TringleWidth, TringleHeight, ech::RED);
 
-		ClearBackground(WHITE); // Clear the Background With a color
+		ech::ClearBackground(ech::WHITE); // Clear the Background With a color
 
-		EndDrawing(); // End Drawing The window 
+		ech::EndDrawing(); // End Drawing The window 
 	}
 
-	CloseWindow(); // Close Window
+	ech::CloseWindow(); // Close Window
 	return 0;
 
 }
