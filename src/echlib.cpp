@@ -2,7 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <iostream>
-#include <fstream>
 #include <unordered_map>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
@@ -10,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <chrono>
+#include <fstream>
 
 namespace ech {
     GLFWwindow* window = nullptr;
@@ -82,14 +82,6 @@ void main() {
     FragColor = texColor;
 }
 )";
-
-
-
-
-
-
-
-    // Shader Compilation Helper Function
     void CompileShader(unsigned int shader, const char* source, const char* type) {
         glShaderSource(shader, 1, &source, nullptr);
         glCompileShader(shader);
@@ -103,7 +95,6 @@ void main() {
         }
     }
 
-    // Shader Program Creation for Shapes (Solid Color)
     void CreateShapeShaderProgram() {
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
         CompileShader(vertexShader, shapeVertexShaderSource, "Vertex");
@@ -128,50 +119,37 @@ void main() {
         glDeleteShader(fragmentShader);
     }
 
-    // Shader Program Creation for Textures
-    void CreateTextureShaderProgram() {
-        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        CompileShader(vertexShader, textureVertexShaderSource, "Vertex");
-
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        CompileShader(fragmentShader, textureFragmentShaderSource, "Fragment");
-
-        shaderProgramTexture = glCreateProgram();
-        glAttachShader(shaderProgramTexture, vertexShader);
-        glAttachShader(shaderProgramTexture, fragmentShader);
-        glLinkProgram(shaderProgramTexture);
-
-        int success;
-        char infoLog[512];
-        glGetProgramiv(shaderProgramTexture, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shaderProgramTexture, 512, nullptr, infoLog);
-            std::cerr << "ERROR: Texture Shader Program Linking Failed\n" << infoLog << std::endl;
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-    }
-
-
-
-    // Initialize Graphics (Minor Improvements)
     void InitGraphics() {
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
         glGenBuffers(1, &ebo);
+        glBindVertexArray(vao);
+
+        float vertices[] = {
+            -0.5f, -0.5f,
+             0.5f, -0.5f,
+             0.0f,  0.5f
+        };
+
+        unsigned int indices[] = { 0, 1, 2 };
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glDisable(GL_DEPTH_TEST);
 
-        // Create shader programs for shapes and textures
         CreateShapeShaderProgram();
-        CreateTextureShaderProgram();
     }
 
-    // Create the Window (No Change)
     void ech::MakeWindow(int width, int height, const char* title) {
         if (!glfwInit()) {
             std::cerr << "ERROR: Failed to initialize GLFW" << std::endl;
@@ -197,47 +175,28 @@ void main() {
             return;
         }
 
-        // Store the window size for scaling
         windowWidth = width;
         windowHeight = height;
-
-        // Set the initial viewport size
         glViewport(0, 0, width, height);
 
-        // Set the callback for resizing the window
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int w, int h) {
             ech::windowWidth = w;
             ech::windowHeight = h;
             glViewport(0, 0, w, h);
             });
 
-        // Initialize graphics (shaders, buffers, etc.)
         InitGraphics();
     }
-
-
-    void FramebufferSizeCallback(GLFWwindow* window, int width, int height) {
-        ech::windowWidth = width;
-        ech::windowHeight = height;
-        glViewport(0, 0, width, height);
-
-        // Update projection matrix (if you're using one)
-        float aspectRatio = (float)width / (float)height;
-    }
-
-
 
     void ech::SetTargetFps(int target) {
         targetFps = target;
     }
 
-    // Close the window
     void ech::CloseWindow() {
         glfwDestroyWindow(window);
         glfwTerminate();
     }
 
-    // Check if the window should close
     int ech::WindowShouldClose() {
         return glfwWindowShouldClose(window);
     }
@@ -253,6 +212,9 @@ void main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+
+
 
     // Clear the background with a color
     void ech::ClearBackground(Color color) {
@@ -459,6 +421,93 @@ void main() {
         glBindVertexArray(0); // Unbind VAO
     }
 
+
+    void ech::DrawProCircle(float centerX, float centerY, float radius, const Color& color, int segments, float transperency = 1.0f) {
+        int windowWidth, windowHeight;
+        glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+        float aspectRatio = (float)windowWidth / (float)windowHeight;
+
+        // Normalize positions
+        float normalizedX = (centerX / (float)windowWidth) * 2.0f - 1.0f;
+        float normalizedY = (centerY / (float)windowHeight) * 2.0f - 1.0f;
+
+        // Adjust X-axis for aspect ratio
+        normalizedX *= aspectRatio;
+
+        // Flip the Y coordinate to match OpenGL's coordinate system
+        float flippedY = windowHeight - centerY;
+
+        // Flip the Y coordinate to match OpenGL's coordinate system
+        segments = 36;
+
+        // Calculate the vertices for the circle using polar coordinates
+        std::vector<float> vertices;
+        for (int i = 0; i < segments; ++i) {
+            float theta = (i / float(segments)) * 2.0f * glm::pi<float>();
+            float x = centerX + radius * cos(theta);
+            float y = flippedY - radius * sin(theta); // Flip y-axis for OpenGL coordinates
+            vertices.push_back((x / windowWidth) * 2.0f - 1.0f); // Convert to NDC
+            vertices.push_back(1.0f - (y / windowHeight) * 2.0f); // Convert to NDC
+        }
+
+        // Use the color shader
+        glUseProgram(shaderProgramShape);
+        glUniform4f(glGetUniformLocation(shaderProgramShape, "uColor"), color.r, color.g, color.b, transperency);
+
+        // Create an index array for the circle (fan)
+        std::vector<unsigned int> indices;
+        for (int i = 1; i < segments - 1; ++i) {
+            indices.push_back(0);
+            indices.push_back(i);
+            indices.push_back(i + 1);
+        }
+
+        // Set up the vertex data
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0); // Unbind VAO
+    }
+
+    void ech::DrawProTriangle(float x, float y, float width, float height, const Color& color, float transparency) {
+        int windowWidth, windowHeight;
+        glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+        float flippedY = windowHeight - y;
+
+        float vertices[] = {
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f,
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f,
+            ((x + width / 2) / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f
+        };
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glUseProgram(shaderProgramShape);
+        glUniform4f(glGetUniformLocation(shaderProgramShape, "uColor"), color.r, color.g, color.b, transparency);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glBindVertexArray(0);
+    }
+
+
+
     // Texture System
 
     void LoadTexture(const char* filepath, const std::string& name) {
@@ -491,12 +540,6 @@ void main() {
         glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
         float flippedY = windowHeight - y;
 
-        float normalizedX = (x / (float)windowWidth) * 2.0f - 1.0f;
-        float normalizedY = (y / (float)windowHeight) * 2.0f - 1.0f;
-        float normalizedWidth = (width / (float)windowWidth) * 2.0f;
-        float normalizedHeight = (height / (float)windowHeight) * 2.0f;
-
-        // Define vertices and texture coordinates
         float vertices[] = {
             (x / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, 0.0f, 1.0f,
             ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, 1.0f, 1.0f,
@@ -511,9 +554,15 @@ void main() {
             return;
         }
 
+        glUseProgram(shaderProgramTexture);  // Activate texture shader
+
+        // ✅ Set full opacity for non-Pro textures
+        int alphaLocation = glGetUniformLocation(shaderProgramTexture, "alpha");
+        glUniform1f(alphaLocation, 1.0f);
+
         glBindTexture(GL_TEXTURE_2D, textures[name]);
 
-        // Buffer and configure the VAO, VBO, and EBO for drawing
+        // Buffer and configure VAO, VBO, and EBO
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
@@ -526,12 +575,69 @@ void main() {
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
-        glUseProgram(shaderProgramTexture);  // Ensure the shader program is active
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);  // Draw the textured rectangle
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);  // Draw the rectangle
 
         // Clean up
-        glBindVertexArray(0);  // Unbind the VAO
+        glBindVertexArray(0);
     }
+
+
+    void DrawProTexturedRectangle(float x, float y, float width, float height, float rotation, float alpha, const std::string& name) {
+        if (textures.find(name) == textures.end()) {
+            printf("Texture not found: %s\n", name.c_str());
+            return;
+        }
+
+        int windowWidth, windowHeight;
+        glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+        float halfWidth = width / 2.0f;
+        float halfHeight = height / 2.0f;
+
+        // Calculate rotated vertices
+        float cosTheta = cos(rotation);
+        float sinTheta = sin(rotation);
+
+        float vertices[] = {
+            -halfWidth * cosTheta - (-halfHeight) * sinTheta, -halfWidth * sinTheta + (-halfHeight) * cosTheta, 0.0f, 1.0f, // Top-left
+             halfWidth * cosTheta - (-halfHeight) * sinTheta,  halfWidth * sinTheta + (-halfHeight) * cosTheta, 1.0f, 1.0f, // Top-right
+             halfWidth * cosTheta - halfHeight * sinTheta,     halfWidth * sinTheta + halfHeight * cosTheta,    1.0f, 0.0f, // Bottom-right
+            -halfWidth * cosTheta - halfHeight * sinTheta,    -halfWidth * sinTheta + halfHeight * cosTheta,   0.0f, 0.0f  // Bottom-left
+        };
+
+        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+
+        // Move vertices to correct screen position
+        for (int i = 0; i < 4; i++) {
+            vertices[i * 4] = (vertices[i * 4] + x) / windowWidth * 2.0f - 1.0f;
+            vertices[i * 4 + 1] = 1.0f - ((vertices[i * 4 + 1] + y) / windowHeight * 2.0f);
+        }
+
+        glBindTexture(GL_TEXTURE_2D, textures[name]);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glUseProgram(shaderProgramTexture);
+
+        // Pass transparency to shader
+        int alphaLocation = glGetUniformLocation(shaderProgramTexture, "alpha");
+        glUniform1f(alphaLocation, alpha);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+    }
+
 
 
     // Input System
@@ -573,5 +679,7 @@ void main() {
         lastTime = currentTime;
         return duration.count();
     }
+
+
 
 }
