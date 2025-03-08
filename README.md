@@ -6,15 +6,15 @@ An easy and open-source game development library.
 
 Features include:
 
-- A rendering system for textures and other shapes
-- An audio system
-- An input system
-- A scene management system (maybe)
+- A rendering system for textures and other shapes (Done)
+- An audio system (Done)
+- An input system (Done)
+- A scene management system (planned)
 - A text UI system
-- A 2D camera system (planned)
+- A 2D camera system 
 - A collision system to make handling collisions easier
 - A particle system (planned)
-- A file I/O system
+- A file I/O system (Done)
 - Script integration and event handling (under consideration)
 - Networking (under consideration)
 - AI and pathfinding (under consideration)
