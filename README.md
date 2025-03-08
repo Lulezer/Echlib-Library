@@ -8,7 +8,8 @@ Features include:
 
 - A rendering system for textures and other shapes (Done)
 - An audio system (Done)
-- An input system (Done)
+- Keyboard Input System (Done)
+- Mouse Input System (Done)
 - A scene management system (planned)
 - A text UI system
 - A 2D camera system 
