@@ -6,20 +6,21 @@ An easy and open-source game development library.
 
 Features include:
 
-- [x]A rendering system for textures and other shapes (Done)
-- [x]An audio system (Done)
-- [x]Keyboard Input System (Done)
-- [x]Mouse Input System (Done)
-- []A scene management system (planned)
-- []A text UI system
-- [x]A 2D camera system 
-- []A collision system to make handling collisions easier
-- []A particle system (planned)
-- [x]A file I/O system (Done)
-- []Script integration and event handling (under consideration)
-- []Networking (under consideration)
-- []AI and pathfinding (under consideration)
-- []Cross-platform support (planned)
+- [x] A rendering system for textures and other shapes (Done)
+- [x] An audio system (Done)
+- [x] Keyboard Input System (Done)
+- [x] Mouse Input System (Done)
+- [ ] A scene management system (planned)
+- [ ] A text UI system
+- [x] A 2D camera system 
+- [ ] A collision system to make handling collisions easier
+- [ ] A particle system (planned)
+- [x] A file I/O system (Done)
+- [ ] Script integration and event handling (under consideration)
+- [ ] Networking (under consideration)
+- [ ] AI and pathfinding (under consideration)
+- [ ] Cross-platform support (planned)
+
 
 
 *Note:*
