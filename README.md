@@ -13,7 +13,7 @@ Features include:
 - [ ] A scene management system (planned)
 - [ ] A text UI system
 - [x] A 2D camera system 
-- [ ] A collision system to make handling collisions easier
+- [X] A collision system to make handling collisions easier
 - [ ] A particle system (planned)
 - [x] A file I/O system 
 - [ ] Script integration and event handling (under consideration)
