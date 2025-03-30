@@ -17,9 +17,10 @@
 #include <fstream>
 #include <ostream>
 
+#define FONT_BITMAP_WIDTH 1024 * 2
+#define FONT_BITMAP_HEIGHT 1024 * 2
 
-#define FONT_BITMAP_WIDTH 512
-#define FONT_BITMAP_HEIGHT 512
+
 
 
 namespace ech {
@@ -27,6 +28,8 @@ namespace ech {
     extern int windowWidth;
     extern int windowHeight;
     extern float transparency;
+
+
 
     // Define a Color struct
     struct Color {
@@ -40,7 +43,39 @@ namespace ech {
         LINEAR = GL_LINEAR
     };
 
+    struct Texture2D {
+        unsigned int id;      // OpenGL texture ID
+        int width, height;    // Texture dimensions
+    };
 
+    struct Camera {
+        float x, y;          // Position
+        float rotation;      // Rotation in degrees
+        float zoom;          // Zoom level 
+
+        Camera() : x(0), y(0), rotation(0), zoom(1.0f) {} // Constructor to initialize defaults
+    };
+
+    inline Camera camera; // Declare a global camera instance
+
+    struct Font {
+        GLuint textureID;
+        int textureWidth;
+        int textureHeight;
+        stbtt_bakedchar characterData[256]; // 95 ASCII characters
+    };
+
+    struct Vec2 {
+        float x, y;
+    };
+
+    inline Font font;
+
+    struct CollisionShape {
+        float x, y, width, height;
+
+        bool CheckCollision(const CollisionShape& other);  // Declare function
+    };
 
     // Define common colors
     const Color WHITE = { 1.0f, 1.0f, 1.0f, transparency };   // Full white
@@ -59,6 +94,7 @@ namespace ech {
     const Color LIGHT_GREEN = { 0.565f, 0.933f, 0.565f, transparency }; // Light Green
     const Color DARK_GREEN = { 0.0f, 0.459f, 0.173f, transparency };  // Dark Green
     const Color LIGHT_CORAL = { 0.941f, 0.502f, 0.502f, transparency }; // Light Coral
+    const Color TRANSPARENT = { 0, 0, 0, 0 };
 
     // Keys (key codes)
 #define KEY_UNKNOWN GLFW_KEY_UNKNOWN
@@ -189,8 +225,11 @@ namespace ech {
 #define KEY_RIGHT_SUPER GLFW_KEY_RIGHT_SUPER
 #define KEY_MENU GLFW_KEY_MENU
 
-// Functions
-// Function declarations
+#define MOUSE_LEFT_BUTTON GLFW_MOUSE_BUTTON_LEFT
+#define MOUSE_RIGHT_BUTTON GLFW_MOUSE_BUTTON_RIGHT
+#define MOUSE_MIDDLE_BUTTON GLFW_MOUSE_BUTTON_MIDDLE
+
+    // Function declarations
     void MakeWindow(int width, int height, const char* title);
     void CloseWindow();
     int WindowShouldClose();
@@ -208,22 +247,32 @@ namespace ech {
     void DrawProTriangle(float x, float y, float width, float height, const Color& color, float transparency);
     void DrawProTexturedRectangle(float x, float y, float width, float height, float rotation, float alpha, const std::string& name);
 
-
-
     // Input System
     int IsKeyPressed(int key);
     int IsKeyHeld(int key);
+
+    int IsMouseButtonPressed(int button);
+    int IsMouseButtonHeld(int button);
 
     // Texture Rendering
     void LoadTexture(const char* filepath, const std::string& name);
     void DrawTexturedRectangle(float x, float y, float width, float height, const std::string& name);
 
-
+    bool LoadFont(const char* fontFile, int fontSize, Font& outFont);
+    void DrawText(Font& font, const char* text, float x, float y, int fontSize, Color color);
 
     // Time Management
     float GetDeltaTime();
 
+    //  Mouse Stuff
+    void GetMousePosition(double& x, double& y);
 
+    // Collision
+
+
+    void DrawRectangleCollisionShape(float x, float y, float width, float height, const Color& color);
+
+    // Template function to save data to a file
     template <typename T>
     inline void savefile(const std::string& filename, const T& data) {
         std::ofstream file(filename, std::ios::binary);
@@ -236,6 +285,7 @@ namespace ech {
         }
     }
 
+    // Template function to load data from a file
     template <typename T>
     inline void loadfile(const std::string& filename, T& data) {
         std::ifstream file(filename, std::ios::binary);
@@ -248,7 +298,7 @@ namespace ech {
         }
     }
 
-    // Specialized function for std::string
+    // Specialized version of savefile for std::string
     template <>
     inline void savefile<std::string>(const std::string& filename, const std::string& data) {
         std::ofstream file(filename);
@@ -261,6 +311,7 @@ namespace ech {
         }
     }
 
+    // Specialized version of loadfile for std::string
     template <>
     inline void loadfile<std::string>(const std::string& filename, std::string& data) {
         std::ifstream file(filename);
@@ -273,5 +324,9 @@ namespace ech {
         }
     }
 
-}
+
+
+
+} // namespace ech
+
 #endif // ECHLIB_H
