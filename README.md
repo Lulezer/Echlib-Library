@@ -1,75 +1,77 @@
-# Echlib 
+# Echlib
 
-A C-C++ library made to help people start making games.
-An easy and open-source game development library.
+A **C/C++ library** designed to help beginners start making games.  
+An easy-to-use and open-source **game development library**.
 
+## Features  
 
-Features include:
+✔️ **Implemented** | ❌ **Planned / Under Consideration**  
 
-- [x] A rendering system for textures and other shapes 
-- [x] An audio system 
-- [x] Keyboard Input System 
-- [x] Mouse Input System 
-- [ ] A scene management system (planned)
-- [ ] A text UI system
-- [x] A 2D camera system 
-- [X] A collision system to make handling collisions easier
-- [ ] A particle system (planned)
-- [x] A file I/O system 
-- [ ] Script integration and event handling (under consideration)
-- [ ] Networking (under consideration)
-- [ ] AI and pathfinding (under consideration)
-- [ ] Cross-platform support (planned)
+- ✅ **Rendering System** (Textures, Shapes)  
+- ✅ **Audio System**  
+- ✅ **Keyboard & Mouse Input Handling**  
+- ✅ **2D Camera System**  
+- ✅ **Collision System** (Simplified collision handling)  
+- ✅ **File I/O System**  
+- ❌ **Scene Management System** (Planned)  
+- ❌ **Text UI System** (Planned)  
+- ❌ **Particle System** (Planned)  
+- ❌ **Script Integration & Event Handling** (Under Consideration)  
+- ❌ **Networking** (Under Consideration)  
+- ❌ **AI & Pathfinding** (Under Consideration)  
+- ❌ **Cross-Platform Support** (Planned)  
 
+> **Note:** Features may change over time. Some may be delayed or removed.
 
+## Future Vision  
 
-*Note:*
-- Still in early Development.
-- Not all features might be implemented some might be scrapped for later or never added.
-- Other features might also be implemented
+Echlib may **evolve into a full game engine** in the future, with more advanced features reserved for that version.  
 
+---
 
-*Future Vision:*
+## Installation  
 
-- This library might evolve into a game engine one day. Becouse of that more advanced features could be reserved for the engine.
+### 📌 **Option 1: Manual Installation**  
 
+1. **Download the latest release** from: [Echlib Releases](https://github.com/Lulezer/Echlib-Library/releases)  
+2. **Extract the ZIP file** into a folder on your computer.  
+3. **Copy the required files**:  
+   - Move the contents of the **`include/`** and **`src/`** folders into your project directory.  
+4. **Link the required files** in your IDE:  
+   - `echlib.h`, `raudio.h`, etc.  
+5. **Start coding!** 🎮  
 
+### 🛠️ **Option 2: Use a Pre-Made Template**  
 
-# How to install:
+- **Visual Studio 2022 Template:** [Download](https://github.com/Lulezer/Echlib-VisualStudio2022-Template)  
+  1. Download & extract the template.  
+  2. Right-click the folder → Open with **Visual Studio 2022**.  
+  3. Start coding!  
 
-1. Download The Zip from the releases: https://github.com/Lulezer/Echlib-Library/releases
+---
 
-2: Extract the Zip file into a folder in your computer.
+## 🏆 Credits  
 
-3: Open the folder and Drag everything from (Include, src) and put them in an ide of your choice.
+👤 **Special thanks to:**  
+- **[MrLLGD](https://www.youtube.com/@lowlevelgamedev9330/videos)** – Helped set up CMake and other technical aspects.  
+- **[Raysan5](https://github.com/raysan5)** – Creator of `raudio`.  
 
-4: After that all you need to do is link the echlib.h raudio.....
+---
 
-5: After you have linked Everything you can now start coding!
+## 📖 Wiki  
 
+For **detailed documentation**, visit the [Echlib Wiki](https://github.com/Lulezer/Echlib-Library/wiki) (Coming Soon).  
 
+---
 
-**OR**
+## 💡 Contributing  
 
+Want to contribute? Check out the [contribution guidelines](https://github.com/Lulezer/Echlib-Library/blob/main/CONTRIBUTING.md).  
 
-- You can download These Templates
+---
 
-- Visual Studio 2022: https://github.com/Lulezer/Echlib-VisualStudio2022-Template
-  Once you downloaded it just extract it somewhere on your computer and then right click on the folder and press
-  open with visual studio.
+## ⚖️ License  
 
+Echlib is **open-source** and licensed under the [MIT License](https://github.com/Lulezer/Echlib-Library/blob/main/LICENSE).  
 
-
-
-# Credits:
-
-Thanks to MrLLGD for helping me setup the project with cmake and other problems. His channel:
-https://www.youtube.com/@lowlevelgamedev9330/videos
-
-Thanks to Ray for making Raudio. His github page:
-
-https://github.com/raysan5
-
- 
-
-
+---
