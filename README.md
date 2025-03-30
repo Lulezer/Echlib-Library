@@ -64,11 +64,6 @@ For **detailed documentation**, visit the [Echlib Wiki](https://github.com/Lulez
 
 ---
 
-## 💡 Contributing  
-
-Want to contribute? Check out the [contribution guidelines](https://github.com/Lulezer/Echlib-Library/blob/main/CONTRIBUTING.md).  
-
----
 
 ## ⚖️ License  
 
