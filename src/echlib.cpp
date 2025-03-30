@@ -10,12 +10,23 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <chrono>
 #include <fstream>
+#include <stb_truetype/stb_truetype.h>
+#include <array>
+#include <cstdlib> // For malloc/free or new/delete
+
 
 namespace ech {
     GLFWwindow* window = nullptr;
     unsigned int vao, vbo, ebo;
     unsigned int shaderProgramShape;
     unsigned int shaderProgramTexture;
+    unsigned int shaderProgramText;
+
+    GLuint defaultFont;
+
+    std::unordered_map<std::string, Font> fonts;  // This should be defined once
+
+
     unsigned int textureID;
     std::unordered_map<std::string, GLuint> textures;
 
@@ -30,12 +41,16 @@ namespace ech {
 
     float transparency = 1.0f;
 
+    std::unordered_map<int, bool> mouseButtonPreviousStates;
+
+
+
 
     // Shape Vertex Shader
     static const char* shapeVertexShaderSource = R"(
 #version 330 core
 layout (location = 0) in vec2 aPos;
-
+ 
 void main() {
     gl_Position = vec4(aPos, 0.0, 1.0); // Directly using the vertex position
 }
@@ -46,25 +61,31 @@ void main() {
     static const char* shapeFragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
-uniform vec4 uColor;
+
+uniform vec4 uColor; // Color of the shape
 
 void main() {
-    FragColor = uColor;
+    FragColor = uColor; // Output the color of the shape
 }
+
 )";
 
 
     // Texture Vertex Shader
     static const char* textureVertexShaderSource = R"(
 #version 330 core
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTexCoord;
+layout (location = 0) in vec2 aPos;       // Position of the vertex
+layout (location = 1) in vec2 aTexCoord;  // Texture coordinates
+
 out vec2 TexCoord;
 
+uniform mat4 projection; // Projection matrix for 2D rendering
+
 void main() {
-    gl_Position = vec4(aPos, 0.0, 1.0); // Directly using the vertex position
-    TexCoord = aTexCoord;
+    gl_Position = projection * vec4(aPos, 0.0, 1.0); // Apply projection matrix
+    TexCoord = aTexCoord;  // Pass texture coordinates to fragment shader
 }
+
 )";
 
 
@@ -72,17 +93,53 @@ void main() {
     static const char* textureFragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
+
 in vec2 TexCoord;
 
-uniform sampler2D texture1;
+uniform sampler2D texture1; // The texture for rendering
 
 void main() {
     vec4 texColor = texture(texture1, TexCoord);
-    if (texColor.a < 0.1) discard; // Avoid rendering fully transparent pixels
-    FragColor = texColor;
+    if (texColor.a < 0.1) discard; // Discard transparent pixels
+    FragColor = texColor; // Output the texture color
+}
+
+)";
+
+    // Vertex Shader Source for Text Rendering
+    const char* textVertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
+out vec2 TexCoord;
+
+void main()
+{
+    gl_Position = vec4(aPos, 0.0, 1.0);
+    TexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y); // Flip texture
 }
 )";
-    void CompileShader(unsigned int shader, const char* source, const char* type) {
+
+    // Fragment Shader Source for Text Rendering
+    const char* textFragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+in vec2 TexCoord;
+
+uniform sampler2D text; // Texture for text rendering
+
+void main()
+{
+    FragColor = texture(text, TexCoord);
+}
+)";
+
+
+
+
+
+    // Compile shader
+    void CompileShader(unsigned int shader, const char* source, const std::string& shaderType) {
         glShaderSource(shader, 1, &source, nullptr);
         glCompileShader(shader);
 
@@ -91,9 +148,37 @@ void main() {
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-            std::cerr << "ERROR: " << type << " Shader Compilation Failed\n" << infoLog << std::endl;
+            std::cerr << "ERROR: " << shaderType << " Shader Compilation Failed\n" << infoLog << std::endl;
         }
     }
+
+
+    // Create text shader program
+    void CreateTextShaderProgram() {
+        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        CompileShader(vertexShader, textVertexShaderSource, "Vertex");
+
+        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        CompileShader(fragmentShader, textFragmentShaderSource, "Fragment");
+
+        shaderProgramText = glCreateProgram();
+        glAttachShader(shaderProgramText, vertexShader);
+        glAttachShader(shaderProgramText, fragmentShader);
+        glLinkProgram(shaderProgramText);
+
+        int success;
+        char infoLog[512];
+        glGetProgramiv(shaderProgramText, GL_LINK_STATUS, &success);
+        if (!success) {
+            glGetProgramInfoLog(shaderProgramText, 512, nullptr, infoLog);
+            std::cerr << "ERROR: Text Shader Program Linking Failed\n" << infoLog << std::endl;
+        }
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+    }
+
+
 
     void CreateShapeShaderProgram() {
         unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -114,11 +199,46 @@ void main() {
             glGetProgramInfoLog(shaderProgramShape, 512, nullptr, infoLog);
             std::cerr << "ERROR: Shape Shader Program Linking Failed\n" << infoLog << std::endl;
         }
+        else {
+            std::cout << "Shape Shader Program Linked Successfully!" << std::endl;
+        }
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
     }
 
+    void CreateTextureShaderProgram() {
+        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        CompileShader(vertexShader, textureVertexShaderSource, "Vertex");
+
+        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        CompileShader(fragmentShader, textureFragmentShaderSource, "Fragment");
+
+        shaderProgramTexture = glCreateProgram();
+        glAttachShader(shaderProgramTexture, vertexShader);
+        glAttachShader(shaderProgramTexture, fragmentShader);
+        glLinkProgram(shaderProgramTexture);
+
+        int success;
+        char infoLog[512];
+        glGetProgramiv(shaderProgramTexture, GL_LINK_STATUS, &success);
+        if (!success) {
+            glGetProgramInfoLog(shaderProgramTexture, 512, nullptr, infoLog);
+            std::cerr << "ERROR: Shape Shader Program Linking Failed\n" << infoLog << std::endl;
+        }
+        else {
+            std::cout << "Shape Shader Program Linked Successfully!" << std::endl;
+        }
+
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+    }
+
+
+
+
+
+    // Initialize OpenGL
     void InitGraphics() {
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
@@ -126,9 +246,9 @@ void main() {
         glBindVertexArray(vao);
 
         float vertices[] = {
-            -0.5f, -0.5f,
-             0.5f, -0.5f,
-             0.0f,  0.5f
+            -0.5f, -0.5f, 0.0f, 0.0f,
+             0.5f, -0.5f, 1.0f, 0.0f,
+             0.0f,  0.5f, 0.5f, 1.0f
         };
 
         unsigned int indices[] = { 0, 1, 2 };
@@ -139,15 +259,18 @@ void main() {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
         glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         glDisable(GL_DEPTH_TEST);
 
+        CreateTextShaderProgram();
         CreateShapeShaderProgram();
+        CreateTextureShaderProgram();
     }
 
     void ech::MakeWindow(int width, int height, const char* title) {
@@ -251,43 +374,41 @@ void main() {
 
     void ech::DrawRectangle(float x, float y, float width, float height, const Color& color) {
         glUseProgram(shaderProgramShape);  // Use the shader for solid color shapes
+
         int windowWidth, windowHeight;
         glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
 
-        float normalizedX = (x / (float)windowWidth) * 2.0f - 1.0f;
-        float normalizedY = (y / (float)windowHeight) * 2.0f - 1.0f;
-        float normalizedWidth = (width / (float)windowWidth) * 2.0f;
-        float normalizedHeight = (height / (float)windowHeight) * 2.0f;
+        float flippedY = windowHeight - y;  // Flip Y to match OpenGL coordinates
 
-        // Set the color uniform
-        glUniform4f(glGetUniformLocation(shaderProgramShape, "uColor"), color.r, color.g, color.b, color.a);
-
-        // Define vertices for the rectangle
+        // Define vertices consistently with DrawTexturedRectangle
         float vertices[] = {
-            (x / windowWidth) * 2.0f - 1.0f, 1.0f - (y / windowHeight) * 2.0f,
-            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (y / windowHeight) * 2.0f,
-            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - ((y + height) / windowHeight) * 2.0f,
-            (x / windowWidth) * 2.0f - 1.0f, 1.0f - ((y + height) / windowHeight) * 2.0f
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f,         // Bottom-left
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, // Bottom-right
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f, // Top-right
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f  // Top-left
         };
 
-        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };  // Rectangle is made of two triangles
+        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };  // Two triangles for the rectangle
+
+        // Set color uniform
+        glUniform4f(glGetUniformLocation(shaderProgramShape, "uColor"), color.r, color.g, color.b, color.a);
 
         // Bind buffers
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
-        // Vertex attributes
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
-        // Draw the rectangle
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);  // Draw the rectangle
 
         glBindVertexArray(0);  // Unbind VAO
     }
+
     void DrawProRectangle(float x, float y, float width, float height, const Color& color, float angle, float transperency = 1.0f) {
         int windowWidth, windowHeight;
         glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
@@ -541,11 +662,12 @@ void main() {
         float flippedY = windowHeight - y;
 
         float vertices[] = {
-            (x / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, 0.0f, 1.0f,
-            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, 1.0f, 1.0f,
-            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f, 1.0f, 0.0f,
-            (x / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f, 0.0f, 0.0f
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, 0.0f, 0.0f, // Bottom-left
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f, 1.0f, 0.0f, // Bottom-right
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f, 1.0f, 1.0f, // Top-right
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f, 0.0f, 1.0f  // Top-left
         };
+
 
         unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 
@@ -554,10 +676,13 @@ void main() {
             return;
         }
 
-        glUseProgram(shaderProgramTexture);  // Activate texture shader
+        stbi_set_flip_vertically_on_load(true);
+
+        
+        glUseProgram(shaderProgramText);  // Activate texture shader
 
         // ✅ Set full opacity for non-Pro textures
-        int alphaLocation = glGetUniformLocation(shaderProgramTexture, "alpha");
+        int alphaLocation = glGetUniformLocation(shaderProgramText, "alpha");
         glUniform1f(alphaLocation, 1.0f);
 
         glBindTexture(GL_TEXTURE_2D, textures[name]);
@@ -627,16 +752,18 @@ void main() {
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
-        glUseProgram(shaderProgramTexture);
+        glUseProgram(shaderProgramText);
 
         // Pass transparency to shader
-        int alphaLocation = glGetUniformLocation(shaderProgramTexture, "alpha");
+        int alphaLocation = glGetUniformLocation(shaderProgramText, "alpha");
         glUniform1f(alphaLocation, alpha);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
     }
+
+
 
 
 
@@ -673,13 +800,265 @@ void main() {
         return glfwGetKey(window, key) == GLFW_PRESS;
     }
 
-    float GetDeltaTime() {
+
+    // Function to check if a mouse button was just pressed
+    int ech::IsMouseButtonPressed(int button) {
+        // Initialize the button state if it doesn't exist in the map
+        if (mouseButtonPreviousStates.find(button) == mouseButtonPreviousStates.end()) {
+            mouseButtonPreviousStates[button] = false;  // Set the initial state to not pressed
+        }
+
+        // Get the current state of the mouse button
+        bool currentState = glfwGetMouseButton(window, button) == GLFW_PRESS;
+
+        // Get the previous state of the mouse button
+        bool previousState = mouseButtonPreviousStates[button];
+
+        // Update the button state in the map
+        mouseButtonPreviousStates[button] = currentState;
+
+        // Return true if the mouse button was just pressed (not pressed last frame, pressed now)
+        return currentState && !previousState;
+    }
+
+    // Function to detect if a mouse button is being held down (continuously pressed)
+    int ech::IsMouseButtonHeld(int button) {
+        // Initialize the button state if it doesn't exist in the map
+        if (mouseButtonPreviousStates.find(button) == mouseButtonPreviousStates.end()) {
+            mouseButtonPreviousStates[button] = false;  // Set the initial state to not pressed
+        }
+
+        // Return whether the mouse button is currently pressed
+        return glfwGetMouseButton(window, button) == GLFW_PRESS;
+    }
+
+    float ech::GetDeltaTime() {
         auto currentTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> duration = std::chrono::duration_cast<std::chrono::duration<float>>(currentTime - lastTime);
         lastTime = currentTime;
         return duration.count();
     }
 
+
+    // Function to load font with stb_truetype
+    bool LoadFont(const char* fontFile, int fontSize, Font& outFont) {
+        // Open the font file
+        FILE* fontFilePointer = fopen(fontFile, "rb");
+        if (!fontFilePointer) {
+            std::cerr << "Failed to open font file!" << std::endl;
+            return false;
+        }
+
+        // Read the font file into a buffer
+        fseek(fontFilePointer, 0, SEEK_END);
+        long length = ftell(fontFilePointer);
+        fseek(fontFilePointer, 0, SEEK_SET);
+        unsigned char* ttfBuffer = (unsigned char*)malloc(length);
+        fread(ttfBuffer, 1, length, fontFilePointer);
+        fclose(fontFilePointer);
+
+        // Initialize font using stb_truetype
+        stbtt_fontinfo fontInfo;
+        if (!stbtt_InitFont(&fontInfo, ttfBuffer, stbtt_GetFontOffsetForIndex(ttfBuffer, 0))) {
+            std::cerr << "Failed to initialize font!" << std::endl;
+            free(ttfBuffer);
+            return false;
+        }
+
+        // Generate OpenGL texture
+        glGenTextures(1, &outFont.textureID);
+        glBindTexture(GL_TEXTURE_2D, outFont.textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        unsigned char* bitmap = new unsigned char[FONT_BITMAP_WIDTH * FONT_BITMAP_HEIGHT](); // Initialize bitmap
+
+        // Bake the font into the bitmap (character range 32 to 96)
+        int numCharsBaked = stbtt_BakeFontBitmap(ttfBuffer, 0, fontSize, bitmap,
+            FONT_BITMAP_WIDTH, FONT_BITMAP_HEIGHT,
+            32, 96, outFont.characterData);
+
+        if (numCharsBaked != 256) {
+            std::cerr << "Error: Not all characters were baked successfully! Only " << numCharsBaked << " characters baked." << std::endl;
+            delete[] bitmap;
+            free(ttfBuffer);
+            return false;
+        }
+
+        // Upload bitmap to OpenGL texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_BITMAP_WIDTH, FONT_BITMAP_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+
+        outFont.textureWidth = FONT_BITMAP_WIDTH;
+        outFont.textureHeight = FONT_BITMAP_HEIGHT;
+
+        delete[] bitmap;
+        free(ttfBuffer);
+
+        // Validate baked character data
+        bool invalidCharFound = false;
+        for (int i = 0; i < 256; ++i) {
+            const stbtt_bakedchar& c = outFont.characterData[i];
+            if (c.x0 == c.x1 || c.y0 == c.y1) {
+                std::cerr << "Skipping invalid character at index " << i << ": "
+                    << "x0=" << c.x0 << ", x1=" << c.x1 << ", "
+                    << "y0=" << c.y0 << ", y1=" << c.y1 << std::endl;
+                invalidCharFound = true;
+            }
+        }
+
+        if (invalidCharFound) {
+            std::cerr << "Warning: Some characters were invalid during baking!" << std::endl;
+        }
+
+        return true;
+    }
+
+
+
+
+
+
+    void DrawText(Font& font, const char* text, float x, float y, int fontSize, Color color) {
+        if (!text) {
+            std::cerr << "Error: text is null!" << std::endl;
+            return;
+        }
+
+        if (font.textureID == 0) {
+            std::cerr << "Error: Font texture not loaded!" << std::endl;
+            return;
+        }
+
+        if (shaderProgramText == 0) {
+            std::cerr << "Error: Shader program not initialized!" << std::endl;
+            return;
+        }
+
+        glUseProgram(shaderProgramText);
+
+        GLint textColorLocation = glGetUniformLocation(shaderProgramText, "textColor");
+        glUniform4f(textColorLocation, color.r, color.g, color.b, color.a);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, font.textureID);
+
+        static GLuint VAO = 0, VBO = 0;
+        if (VAO == 0) {
+            glGenVertexArrays(1, &VAO);
+            glGenBuffers(1, &VBO);
+        }
+
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        float xPos = x, yPos = y;
+
+        // Loop through each character in the text string
+        for (const char* p = text; *p; ++p) {
+            if (*p == 32) { // Skip space manually (ASCII 32)
+                xPos += fontSize; // Add spacing for the space character
+                continue;
+            }
+
+            if (*p < 32 || *p >= 127) continue;  // Skip characters outside the baked range (32-126)
+
+            stbtt_bakedchar& c = font.characterData[*p - 32]; // Access the baked character
+
+            // If character data is invalid (zero width or height), skip it
+            if (c.x0 == c.x1 || c.y0 == c.y1) {
+                std::cerr << "Skipping invalid character: " << *p << std::endl;
+                continue;
+            }
+
+            // Calculate the position and size for the character quad
+            float x2 = xPos + c.xoff;
+            float y2 = yPos - c.yoff;
+            float w = c.x1 - c.x0;
+            float h = c.y1 - c.y0;
+
+            // Create the vertices for the quad
+            float vertices[6][4] = {
+                { x2,     y2 + h,   c.x0 / font.textureWidth, c.y1 / font.textureHeight },
+                { x2,     y2,       c.x0 / font.textureWidth, c.y0 / font.textureHeight },
+                { x2 + w, y2,       c.x1 / font.textureWidth, c.y0 / font.textureHeight },
+                { x2,     y2 + h,   c.x0 / font.textureWidth, c.y1 / font.textureHeight },
+                { x2 + w, y2,       c.x1 / font.textureWidth, c.y0 / font.textureHeight },
+                { x2 + w, y2 + h,   c.x1 / font.textureWidth, c.y1 / font.textureHeight }
+            };
+
+            // Update the vertex buffer with the new data
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+            // Draw the character as a quad
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            // Advance to the next character's position
+            xPos += c.xadvance;
+        }
+
+
+        glBindVertexArray(0);
+    }
+
+
+
+
+
+
+
+    void GetMousePosition(double& x, double& y) {
+        glfwGetCursorPos(window, &x, &y);
+    }
+
+    bool ech::CollisionShape::CheckCollision(const CollisionShape& other) {
+        return (x < other.x + other.width &&
+            x + width > other.x &&
+            y < other.y + other.height &&
+            y + height > other.y);
+    }
+
+    void DrawRectangleCollisionShape(float x, float y, float width, float height, const Color& color) {
+        glUseProgram(shaderProgramShape);  // Use shape shader
+
+        int windowWidth, windowHeight;
+        glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+        float flippedY = windowHeight - y;
+
+        float vertices[] = {
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f,
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - (flippedY / windowHeight) * 2.0f,
+            ((x + width) / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f,
+            (x / windowWidth) * 2.0f - 1.0f, 1.0f - ((flippedY - height) / windowHeight) * 2.0f
+        };
+
+        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+
+        glUniform4f(glGetUniformLocation(shaderProgramShape, "uColor"), color.r, color.g, color.b, color.a);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+    }
 
 
 }
