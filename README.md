@@ -64,9 +64,3 @@ For **detailed documentation**, visit the [Echlib Wiki](https://github.com/Lulez
 
 ---
 
-
-## ⚖️ License  
-
-Echlib is **open-source** and licensed under the [MIT License](https://github.com/Lulezer/Echlib-Library/blob/main/LICENSE).  
-
----
