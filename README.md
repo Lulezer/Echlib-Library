@@ -3,6 +3,10 @@
 A **C/C++ library** designed to help beginners start making games.  
 An easy-to-use and open-source **game development library**.
 
+
+- NOTE: I restarted Echlib from scratch because the previous version was messy, unoptimized, and difficult to extend.
+This new version features cleaner code and better performance, making it easier to build upon.
+
 ## Features  
 
 ✔️ **Implemented** | ❌ **Planned / Under Consideration**  
