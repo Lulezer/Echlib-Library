@@ -14,8 +14,8 @@ This new version features cleaner code and better performance, making it easier 
 - ✅ **Rendering System** (Textures, Shapes)  
 - ✅ **Audio System**  
 - ✅ **Keyboard & Mouse Input Handling**  
-- ❌ **2D Camera System**  
-- ❌ **Collision System** (Simplified collision handling)  
+- ✅ **2D Camera System**  
+- ✅ **Collision System** (Simplified collision handling)  
 - ✅ **File I/O System**  
 - ❌ **Scene Management System** (Planned)  
 - ❌ **Text UI System** (Planned)  
