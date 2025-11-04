@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <glm/glm.hpp>            // For glm::mat4, glm::vec2
 #include <glm/gtc/matrix_transform.hpp> // Optional if using glm::translate/rotate/scale
+#include <string>
 
 namespace ech {
 
@@ -76,7 +77,7 @@ namespace ech {
 
     // Frame control
     void StartDrawing();
-    void EndDrawing();
+    void EndDrawing();  
     void ClearBackground(Color color);
 
     // Draw primitives (world coordinates)
@@ -100,4 +101,22 @@ namespace ech {
 	void ProUpdateCamera(float targetX, float targetY, float lerpFactor, float screenWidth, float screenHeight, float zoom);
     // Timing
     float GetDeltaTime();
+
+    bool CheckCollision(float ax, float ay, float aw, float ah,
+        float bx, float by, float bw, float bh);
+
+    // Writes text to a file(overwrites existing)
+        bool WriteFile(const std::string & path, const std::string & content);
+
+    // Appends text to an existing file
+    bool AppendFile(const std::string& path, const std::string& content);
+
+    // Reads a file and returns its entire content as a string
+    std::string ReadFile(const std::string& path);
+
+    // Checks if a file exists
+    bool FileExists(const std::string& path);
+
+    // Deletes a file
+    bool DeleteFile(const std::string& path);
 }
