@@ -17,6 +17,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <fstream>
+#include <filesystem>
+
 namespace ech {
 
     // === GLOBALS ===
@@ -498,7 +501,42 @@ void main() {
         view = t;
     }
 
+    bool ech::CheckCollision(float ax, float ay, float aw, float ah,
+        float bx, float by, float bw, float bh) {
+        return (ax < bx + bw) &&
+            (ax + aw > bx) &&
+            (ay < by + bh) &&
+            (ay + ah > by);
+    }
 
+    bool WriteFile(const std::string& path, const std::string& content) {
+        std::ofstream file(path, std::ios::out | std::ios::trunc);
+        if (!file.is_open()) return false;
+        file << content;
+        return true;
+    }
+
+    bool AppendFile(const std::string& path, const std::string& content) {
+        std::ofstream file(path, std::ios::out | std::ios::app);
+        if (!file.is_open()) return false;
+        file << content;
+        return true;
+    }
+
+    std::string ReadFile(const std::string& path) {
+        std::ifstream file(path, std::ios::in);
+        if (!file.is_open()) return "";
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        return content;
+    }
+
+    bool FileExists(const std::string& path) {
+        return std::filesystem::exists(path);
+    }
+
+    bool DeleteFile(const std::string& path) {
+        return std::filesystem::remove(path);
+    }
 
 
 
