@@ -1,4 +1,4 @@
-#include <echlib.h> // Include the echlib library to use its functions for creating and managing windows, input, and drawing.
+#include <echlib.hpp> // Include the echlib library to use its functions for creating and managing windows, input, and drawing.
 
 int main()
 {
@@ -11,10 +11,10 @@ int main()
     int color = 1;
 
     // Create a window with the specified dimensions and a title
-    ech::MakeWindow(WindowWidth, WindowHeight, "Window example with echlib");
+    ech::CreateWindow(WindowWidth, WindowHeight, "Window example with echlib");
 
-    // Set the game loop to run at 60 frames per second
-    ech::SetTargetFps(60);
+	ech::SetFpsLimit(60); // Limit the frame rate to 60 frames per second
+
 
     // Main game loop: runs until the user closes the window
     while (!ech::WindowShouldClose()) // Check if the window should close
@@ -22,7 +22,7 @@ int main()
         ech::StartDrawing(); // Begin the drawing phase for the current frame
 
         // Check if the right arrow key is pressed (not held)
-        if (ech::IsKeyHeld(KEY_RIGHT))
+        if (ech::IsKeyHeld(ech::KEY_A))
         {
             color += 1; // Increment the color variable to cycle to the next color
         }
@@ -50,10 +50,13 @@ int main()
         }
 
         ech::EndDrawing(); // End the drawing phase for the current frame
+        ech::ApplyFpsLimit(ech::GetDeltaTime());
+
     }
 
     // Close the window and release resources when the loop ends
     ech::CloseWindow();
+
 
     return 0; // Exit the program successfully
 }
