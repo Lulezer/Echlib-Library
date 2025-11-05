@@ -12,6 +12,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include <stb_truetype/stb_truetype.h>
+
 // glm for matrices
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,6 +22,9 @@
 
 #include <fstream>
 #include <filesystem>
+
+#include <thread>
+
 
 namespace ech {
 
@@ -30,6 +36,11 @@ namespace ech {
     unsigned int vao = 0, vbo = 0, ebo = 0;
     unsigned int shaderProgramShape = 0;
     unsigned int shaderProgramTexture = 0;
+    unsigned int shaderProgramText = 0;
+
+    unsigned int textVAO = 0, textVBO = 0;
+
+
 
     std::unordered_map<int, bool> mouseButtonPreviousStates;
     std::unordered_map<int, bool> keyPreviousStates;
@@ -46,6 +57,9 @@ namespace ech {
     glm::mat4 projection;
     glm::mat4 view;
     glm::vec2 cameraPos(0.0f, 0.0f);
+
+    static double targetFrameTime = 0.0; // seconds per frame (0 = unlimited)
+
 
 
     // === SHADERS ===
@@ -114,6 +128,26 @@ void main() {
 
 )";
 
+    // new: textFragmentShaderSource (replace your old texture fragment for text)
+    static const char* textFragmentShaderSource = R"(
+#version 330 core
+in vec2 TexCoord;
+out vec4 FragColor;
+
+uniform sampler2D textAtlas;
+uniform vec3 textColor; // rgb color
+uniform mat4 uProjection;
+uniform mat4 uView;
+
+void main() {
+    // atlas is single channel (GL_RED). Use red channel as alpha.
+    float alpha = texture(textAtlas, TexCoord).r;
+    if (alpha <= 0.003) discard;
+    FragColor = vec4(textColor, alpha);
+}
+)";
+
+
     // === HELPERS ===
     void CompileShader(unsigned int shader, const char* source, const std::string& type) {
         glShaderSource(shader, 1, &source, nullptr);
@@ -167,14 +201,37 @@ void main() {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, 1024 * sizeof(unsigned int), nullptr, GL_DYNAMIC_DRAW);
 
+
+        // create VAO/VBO for text
+        glGenVertexArrays(1, &textVAO);
+        glGenBuffers(1, &textVBO);
+        glBindVertexArray(textVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+        // reserve some space (we will update with BufferData or BufferSubData)
+        glBufferData(GL_ARRAY_BUFFER, 1024 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
+        // layout: vec2 pos, vec2 texCoord -> total 4 floats per vertex
+        glEnableVertexAttribArray(0); // aPos
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1); // aTexCoord
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+
+
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_DEPTH_TEST);
+
+
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
         shaderProgramShape = CreateShaderProgram(shapeVertexShaderSource, shapeFragmentShaderSource);
         shaderProgramTexture = CreateShaderProgram(textureVertexShaderSource, textureFragmentShaderSource);
+        shaderProgramText = CreateShaderProgram(textureVertexShaderSource, textFragmentShaderSource);
+
     }
 
     // --- Window / Context ---
@@ -450,7 +507,14 @@ void main() {
 
     int IsKeyPressed(int key) {
         if (!window) return 0;
-        return glfwGetKey(window, TranslateKey(key)) == GLFW_PRESS;
+
+        int state = glfwGetKey(window, TranslateKey(key)) == GLFW_PRESS;
+        int wasPressed = keyPreviousStates[key];
+
+        keyPreviousStates[key] = state; // update state
+
+        // only return true when key *just* pressed
+        return state && !wasPressed;
     }
 
     int IsKeyHeld(int key) {
@@ -461,16 +525,26 @@ void main() {
 
     int IsMouseButtonPressed(int button) {
         if (!window) return 0;
+
         int glfwButton = TranslateMouseButton(button);
         if (glfwButton == -1) return 0;
-        return glfwGetMouseButton(window, glfwButton) == GLFW_PRESS;
+
+        int state = glfwGetMouseButton(window, glfwButton) == GLFW_PRESS;
+        int wasPressed = mouseButtonPreviousStates[glfwButton];
+
+        mouseButtonPreviousStates[glfwButton] = state;
+
+        return state && !wasPressed;
     }
 
     int IsMouseButtonHeld(int button) {
         if (!window) return 0;
+
         int glfwButton = TranslateMouseButton(button);
         if (glfwButton == -1) return 0;
-        return glfwGetMouseButton(window, glfwButton) == GLFW_PRESS;
+
+        int state = glfwGetMouseButton(window, glfwButton);
+        return state == GLFW_PRESS;
     }
 
     void UpdateCamera(float targetX, float targetY, float lerpFactor, float screenWidth, float screenHeight) {
@@ -538,7 +612,125 @@ void main() {
         return std::filesystem::remove(path);
     }
 
+    void SetFpsLimit(int fps) {
+        if (fps <= 0) {
+            targetFrameTime = 0.0; // disable limit
+        }
+        else {
+            targetFrameTime = 1.0 / static_cast<double>(fps);
+        }
+    }
 
+    void ApplyFpsLimit(double deltaTime) {
+        if (targetFrameTime <= 0.0) return; // unlimited FPS
+
+        double frameTime = deltaTime;
+        if (frameTime < targetFrameTime) {
+            double sleepTime = targetFrameTime - frameTime;
+            std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
+        }
+    }
+
+
+    Font::Font() : ttfBuffer(nullptr), bitmap(nullptr), textureID(0), fontHeight(0) {}
+
+    Font::Font(const std::string& path, float pixelHeight) {
+        Load(path, pixelHeight);
+    }
+
+    Font::~Font() {
+        delete[] ttfBuffer;
+        delete[] bitmap;
+        if (textureID) glDeleteTextures(1, &textureID);
+    }
+
+    bool Font::Load(const std::string& path, float pixelHeight) {
+        fontHeight = pixelHeight;
+        ttfBuffer = new unsigned char[1 << 20]; // 1MB
+        bitmap = new unsigned char[512 * 512];
+
+        std::ifstream file(path, std::ios::binary | std::ios::ate);
+        if (!file) return false;
+        std::streamsize size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        ttfBuffer = new unsigned char[size];
+        if (!file.read((char*)ttfBuffer, size)) { /* error */ }
+        file.close();
+
+        stbtt_BakeFontBitmap(ttfBuffer, 0, pixelHeight, bitmap, 512, 512, 32, 96, cdata);
+
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        return true;
+    }
+
+    void Font::Draw(const std::string& text, float x, float y, Color color) {
+        if (!textureID) return;
+
+        // We'll accumulate quad vertices (6 verts per glyph, each vert = 4 floats: x,y,u,v)
+        std::vector<float> verts;
+        verts.reserve(text.size() * 6 * 4);
+
+        float xpos = x;
+        float ypos = y;
+
+        for (unsigned char ch : text) {
+            if (ch < 32 || ch >= 128) continue;
+            stbtt_aligned_quad q;
+            stbtt_GetBakedQuad(cdata, 512, 512, ch - 32, &xpos, &ypos, &q, 1);
+
+            // two triangles: (x0,y0)-(x1,y0)-(x1,y1) and (x0,y0)-(x1,y1)-(x0,y1)
+            // vertex: x, y, u, v
+            // tri 1
+            verts.push_back(q.x0); verts.push_back(q.y0); verts.push_back(q.s0); verts.push_back(q.t0);
+            verts.push_back(q.x1); verts.push_back(q.y0); verts.push_back(q.s1); verts.push_back(q.t0);
+            verts.push_back(q.x1); verts.push_back(q.y1); verts.push_back(q.s1); verts.push_back(q.t1);
+            // tri 2
+            verts.push_back(q.x0); verts.push_back(q.y0); verts.push_back(q.s0); verts.push_back(q.t0);
+            verts.push_back(q.x1); verts.push_back(q.y1); verts.push_back(q.s1); verts.push_back(q.t1);
+            verts.push_back(q.x0); verts.push_back(q.y1); verts.push_back(q.s0); verts.push_back(q.t1);
+        }
+
+        if (verts.empty()) return;
+
+        // Use text shader (global shaderProgramText)
+        glUseProgram(shaderProgramText);
+
+        // set uniforms: projection, view, textColor, atlas
+        GLint locProj = glGetUniformLocation(shaderProgramText, "uProjection");
+        GLint locView = glGetUniformLocation(shaderProgramText, "uView");
+        if (locProj != -1) glUniformMatrix4fv(locProj, 1, GL_FALSE, glm::value_ptr(projection));
+        if (locView != -1) glUniformMatrix4fv(locView, 1, GL_FALSE, glm::value_ptr(view));
+
+        GLint locColor = glGetUniformLocation(shaderProgramText, "textColor");
+        if (locColor != -1) glUniform3f(locColor, color.r, color.g, color.b);
+
+        // bind atlas to unit 0
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        GLint locAtlas = glGetUniformLocation(shaderProgramText, "textAtlas");
+        if (locAtlas != -1) glUniform1i(locAtlas, 0);
+
+        // upload vertex data
+        glBindVertexArray(textVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+        glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_DYNAMIC_DRAW);
+
+        // draw
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)(verts.size() / 4));
+
+        // cleanup
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+        glUseProgram(0);
+    }
+
+    void DrawText(Font& font, const std::string& text, float x, float y, Color color) {
+        font.Draw(text, x, y, color);
+    }
 
 
 } // namespace ech
