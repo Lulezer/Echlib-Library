@@ -18,7 +18,7 @@ This new version features cleaner code and better performance, making it easier 
 - ✅ **Collision System** (Simplified collision handling)  
 - ✅ **File I/O System**  
 - ❌ **Scene Management System** (Planned)  
-- ❌ **Text UI System** (Planned)  
+-  ✅**Text UI System**  
 - ❌ **Particle System** (Planned)  
 - ❌ **Script Integration & Event Handling** (Under Consideration)  
 - ❌ **Networking** (Under Consideration)  
