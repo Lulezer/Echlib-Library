@@ -4,6 +4,11 @@
 #include <glm/gtc/matrix_transform.hpp> // Optional if using glm::translate/rotate/scale
 #include <string>
 
+#include <stb_truetype/stb_truetype.h>
+
+#include "Window/window.hpp"
+#include <internal.hpp>
+
 namespace ech {
 
     struct Color {
@@ -27,6 +32,23 @@ namespace ech {
 
     inline Camera camera; // Declare a global camera instance
 
+
+    class Font {
+    public:
+        Font();
+        Font(const std::string& path, float pixelHeight);
+        ~Font();
+
+        bool Load(const std::string& path, float pixelHeight);
+        void Draw(const std::string& text, float x, float y, Color color);
+
+    private:
+        unsigned char* ttfBuffer;
+        unsigned char* bitmap;
+        stbtt_bakedchar cdata[96]; // ASCII 32..126
+        unsigned int textureID;
+        float fontHeight;
+    };
     // Define transparency value (fully opaque)
     constexpr float transparency = 1.0f;
 
@@ -72,8 +94,17 @@ namespace ech {
     void CloseWindow();
     int WindowShouldClose();
 
+    void StartDrawingAdv(Window& window);
+    void EndDrawingAdv(Window& window);
+
+    void BeginFrame();
+    void PollEvents();
+    void EndFrame();
+
+
+
     // Graphics init
-    void InitGraphics();
+    // void InitGraphics(GLFWwindow* window);
 
     // Frame control
     void StartDrawing();
@@ -106,7 +137,7 @@ namespace ech {
         float bx, float by, float bw, float bh);
 
     // Writes text to a file(overwrites existing)
-        bool WriteFile(const std::string & path, const std::string & content);
+    bool WriteFile(const std::string & path, const std::string & content);
 
     // Appends text to an existing file
     bool AppendFile(const std::string& path, const std::string& content);
@@ -119,4 +150,17 @@ namespace ech {
 
     // Deletes a file
     bool DeleteFile(const std::string& path);
+
+    
+    void SetFpsLimit(int fps);
+    void ApplyFpsLimit();   // no params
+    
+
+
+    void DrawText(Font& font, const std::string& text, float x, float y, Color color);
+
+    void SetVSync(bool enabled);
+
+    void Shutdown();
+
 }
