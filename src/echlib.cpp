@@ -7,6 +7,9 @@
 #include <vector>
 #include <unordered_map>
 #include <chrono>
+#include <thread>
+#include <fstream>
+#include <filesystem>
 
 // stb_image for textures
 #define STB_IMAGE_IMPLEMENTATION
@@ -20,25 +23,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <fstream>
-#include <filesystem>
-
-#include <thread>
-
+#include "internal.hpp"
+#include "graphics_internal.hpp"
 
 namespace ech {
 
     // === GLOBALS ===
-    GLFWwindow* window = nullptr;
     int windowWidth = 0;
     int windowHeight = 0;
-
-    unsigned int vao = 0, vbo = 0, ebo = 0;
-    unsigned int shaderProgramShape = 0;
-    unsigned int shaderProgramTexture = 0;
-    unsigned int shaderProgramText = 0;
-
-    unsigned int textVAO = 0, textVBO = 0;
 
 
 
@@ -47,106 +39,13 @@ namespace ech {
 
     constexpr float PI = 3.14159265359f;
 
- 
-    // Timing
-    static std::chrono::high_resolution_clock::time_point lastFrameTime = std::chrono::high_resolution_clock::now();
+    // === Timing & Globals (CLEANED) ===
     static float deltaTime = 0.0f;
+    static std::chrono::high_resolution_clock::time_point lastFrameTime;
+    static std::chrono::high_resolution_clock::time_point frameStart;
+    static double targetFrameTime = 0.0;
 
-
-       
-    glm::mat4 projection;
-    glm::mat4 view;
     glm::vec2 cameraPos(0.0f, 0.0f);
-
-    static double targetFrameTime = 0.0; // seconds per frame (0 = unlimited)
-
-
-
-    // === SHADERS ===
-    // Shape Vertex Shader
-    static const char* shapeVertexShaderSource = R"(
-#version 330 core
-layout (location = 0) in vec2 aPos;
-
-uniform mat4 uProjection;
-uniform mat4 uView;
-
-void main() {
-    gl_Position = uProjection * uView * vec4(aPos, -0.5, 1.0);
-}
-
-)";
-
-
-    // Shape Fragment Shader
-    static const char* shapeFragmentShaderSource = R"(
-#version 330 core
-out vec4 FragColor;
-
-uniform vec4 uColor; // Color of the shape
-
-void main() {
-    FragColor = uColor; // Output the color of the shape
-}
-
-)";
-
-
-    // Texture Vertex Shader
-    static const char* textureVertexShaderSource = R"(
-#version 330 core
-layout (location = 0) in vec2 aPos;       // Position of the vertex
-layout (location = 1) in vec2 aTexCoord;  // Texture coordinates
-
-out vec2 TexCoord;
-
-uniform mat4 uProjection; // Projection matrix for 2D rendering
-uniform mat4 uView;       // Add this if you also want camera/view support
-
-void main() {
-    gl_Position = uProjection * uView * vec4(aPos, -0.5, 1.0);
-    TexCoord = aTexCoord;  // Pass texture coordinates to fragment shader
-}
-
-)";
-
-
-    // Texture Fragment Shader
-    static const char* textureFragmentShaderSource = R"(
-#version 330 core
-out vec4 FragColor;
-
-in vec2 TexCoord;
-
-uniform sampler2D texture1; // The texture for rendering
-
-void main() {
-    vec4 texColor = texture(texture1, TexCoord);
-    if (texColor.a < 0.1) discard; // Discard transparent pixels
-    FragColor = texColor; // Output the texture color
-}
-
-)";
-
-    // new: textFragmentShaderSource (replace your old texture fragment for text)
-    static const char* textFragmentShaderSource = R"(
-#version 330 core
-in vec2 TexCoord;
-out vec4 FragColor;
-
-uniform sampler2D textAtlas;
-uniform vec3 textColor; // rgb color
-uniform mat4 uProjection;
-uniform mat4 uView;
-
-void main() {
-    // atlas is single channel (GL_RED). Use red channel as alpha.
-    float alpha = texture(textAtlas, TexCoord).r;
-    if (alpha <= 0.003) discard;
-    FragColor = vec4(textColor, alpha);
-}
-)";
-
 
     // === HELPERS ===
     void CompileShader(unsigned int shader, const char* source, const std::string& type) {
@@ -162,165 +61,149 @@ void main() {
         }
     }
 
-    unsigned int CreateShaderProgram(const char* vertexSource, const char* fragmentSource) {
-        unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        CompileShader(vertexShader, vertexSource, "Vertex");
-
-        unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        CompileShader(fragmentShader, fragmentSource, "Fragment");
-
-        unsigned int shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-
-        int success;
-        char infoLog[512];
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-        if (!success) {
-            glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-            std::cerr << "ERROR::SHADER PROGRAM LINKING FAILED\n" << infoLog << std::endl;
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-
-        return shaderProgram;
-    }
-
-    void InitGraphics() {
-        // Create VAO / VBO / EBO for dynamic drawing
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glGenBuffers(1, &ebo);
-
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        // reserve some space (will rebuffer per draw)
-        glBufferData(GL_ARRAY_BUFFER, 1024 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 1024 * sizeof(unsigned int), nullptr, GL_DYNAMIC_DRAW);
-
-
-        // create VAO/VBO for text
-        glGenVertexArrays(1, &textVAO);
-        glGenBuffers(1, &textVBO);
-        glBindVertexArray(textVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-        // reserve some space (we will update with BufferData or BufferSubData)
-        glBufferData(GL_ARRAY_BUFFER, 1024 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
-
-        // layout: vec2 pos, vec2 texCoord -> total 4 floats per vertex
-        glEnableVertexAttribArray(0); // aPos
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1); // aTexCoord
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDisable(GL_DEPTH_TEST);
-
-
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-        shaderProgramShape = CreateShaderProgram(shapeVertexShaderSource, shapeFragmentShaderSource);
-        shaderProgramTexture = CreateShaderProgram(textureVertexShaderSource, textureFragmentShaderSource);
-        shaderProgramText = CreateShaderProgram(textureVertexShaderSource, textFragmentShaderSource);
-
-    }
-
-    // --- Window / Context ---
-    void CreateWindow(int width, int height, const char* title) {
-        if (!glfwInit()) {
-            std::cerr << "Failed to initialize GLFW\n";
-            return;
-        }
-
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-        window = glfwCreateWindow(width, height, title, nullptr, nullptr);
-        if (!window) {
-            std::cerr << "Failed to create GLFW window\n";
-            glfwTerminate();
-            return;
-        }
-
-        glfwMakeContextCurrent(window);
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-            std::cerr << "Failed to initialize GLAD\n";
-            glfwDestroyWindow(window);
-            glfwTerminate();
-            return;
-        }
-
-        windowWidth = width;
-        windowHeight = height;
-        glViewport(0, 0, width, height);
-
-        // Update projection on resize
-        glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int w, int h) {
-            windowWidth = w;
-            windowHeight = h;
-            glViewport(0, 0, w, h);
-            projection = glm::ortho(0.0f, (float)w, (float)h, 0.0f, -1.0f, 1.0f);
-            });
-
-        InitGraphics();
-
-        // initial projection/view
-        projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
-        view = glm::mat4(1.0f);
+    void CreateWindow(int w, int h, const char* title) {
+        if (!GetDefaultWindow())
+            GetDefaultWindow() = new ech::Window(w, h, title);
     }
 
     void CloseWindow() {
-        if (window) glfwDestroyWindow(window);
-        glfwTerminate();
+        delete GetDefaultWindow();
+        GetDefaultWindow() = nullptr;
     }
 
     int WindowShouldClose() {
-        return window ? glfwWindowShouldClose(window) : 1;
+        return GetDefaultWindow() ? GetDefaultWindow()->ShouldClose() : 1;
     }
 
-    // Timing
     float GetDeltaTime() {
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> elapsed = currentTime - lastFrameTime;
-        lastFrameTime = currentTime;
-        deltaTime = elapsed.count();
         return deltaTime;
     }
 
-    // Frame control
+    void SetFpsLimit(int fps) {
+        if (fps <= 0) targetFrameTime = 0.0;
+        else targetFrameTime = 1.0 / static_cast<double>(fps);
+    }
+
     void StartDrawing() {
+        frameStart = std::chrono::high_resolution_clock::now();
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Set for shape shader
-        glUseProgram(shaderProgramShape);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgramShape, "uProjection"), 1, GL_FALSE, &projection[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgramShape, "uView"), 1, GL_FALSE, &view[0][0]);
-
-        // Set for texture shader
-        glUseProgram(shaderProgramTexture);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgramTexture, "uProjection"), 1, GL_FALSE, &projection[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgramTexture, "uView"), 1, GL_FALSE, &view[0][0]);
+        // Sync Matrices for BOTH shaders
+        unsigned int list[] = { shaderProgramShape, shaderProgramText };
+        for (unsigned int s : list) {
+            if (s == 0) continue;
+            glUseProgram(s);
+            glUniformMatrix4fv(glGetUniformLocation(s, "uProjection"), 1, GL_FALSE, glm::value_ptr(projection));
+            glUniformMatrix4fv(glGetUniformLocation(s, "uView"), 1, GL_FALSE, glm::value_ptr(view));
+        }
+        glUseProgram(shaderProgramShape); // Default to shapes
     }
-
 
     void EndDrawing() {
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(GetDefaultWindow()->GetNativeHandle());
         glfwPollEvents();
+
+        if (targetFrameTime > 0.0) {
+            auto now = std::chrono::high_resolution_clock::now();
+            double elapsed = std::chrono::duration<double>(now - frameStart).count();
+
+            while (elapsed < targetFrameTime) {
+                if (targetFrameTime - elapsed > 0.002) {
+                    std::this_thread::sleep_for(std::chrono::microseconds(500));
+                }
+                else {
+                    std::this_thread::yield();
+                }
+                now = std::chrono::high_resolution_clock::now();
+                elapsed = std::chrono::duration<double>(now - frameStart).count();
+            }
+        }
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
+        lastFrameTime = currentTime;
     }
 
-    void ClearBackground(Color color) {
-        glClearColor(color.r, color.g, color.b, color.a);
+    void StartDrawingAdv(Window& window)
+    {
+        frameStart = std::chrono::high_resolution_clock::now(); // Use high_res for consistency
+
+        GLFWwindow* native = window.GetNativeHandle();
+        glfwMakeContextCurrent(native);
+
+        int fbw, fbh;
+        glfwGetFramebufferSize(native, &fbw, &fbh);
+        glViewport(0, 0, fbw, fbh);
+
+        // Update the projection matrix to match the window size (important for multi-window)
+        projection = glm::ortho(0.0f, (float)fbw, (float)fbh, 0.0f, -1.0f, 1.0f);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Loop through all shaders to send the same matrices
+        unsigned int activeShaders[] = { shaderProgramShape, shaderProgramTexture, shaderProgramText };
+        for (unsigned int s : activeShaders) {
+            if (s == 0) continue;
+            glUseProgram(s);
+            glUniformMatrix4fv(glGetUniformLocation(s, "uProjection"), 1, GL_FALSE, &projection[0][0]);
+            glUniformMatrix4fv(glGetUniformLocation(s, "uView"), 1, GL_FALSE, &view[0][0]);
+        }
     }
+
+    void EndDrawingAdv(Window& window)
+    {
+        glfwSwapBuffers(window.GetNativeHandle());
+
+        auto currentTime = std::chrono::steady_clock::now();
+        deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
+        lastFrameTime = currentTime;
+		glfwPollEvents();
+    }
+
+
+
+
+    // void BeginFrame()
+    // {
+    // 
+    //     if (!limiterInitialized)
+    //     {
+    //         nextFrameTime = frameStart;
+    //         limiterInitialized = true;
+    //     }
+    // }
+     
+     void PollEvents()
+     {
+         glfwPollEvents();
+     }
+     
+   // void EndFrame()
+   // {
+   //     if (targetFrameTime <= 0.0)
+   //         return;
+   // 
+   //     auto now = std::chrono::steady_clock::now();
+   // 
+   //     nextFrameTime += std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+   //         std::chrono::duration<double>(targetFrameTime)
+   //     );
+   // 
+   //     if (nextFrameTime < now)
+   //         nextFrameTime = now;
+   // 
+   //     std::this_thread::sleep_until(nextFrameTime);
+   // }
+
+     void SetVSync(bool enabled) {
+         GLFWwindow* native = GetDefaultWindow()->GetNativeHandle();
+         glfwMakeContextCurrent(native);
+         glfwSwapInterval(enabled ? 1 : 0);
+     }
+
+     void ClearBackground(Color color) {
+         glClearColor(color.r, color.g, color.b, color.a);
+     }
 
     // --- DRAW FUNCTIONS ---
     void DrawLine(float x1, float y1, float x2, float y2, Color color) {
@@ -453,18 +336,26 @@ void main() {
     }
 
     void DrawTexturedRectangle(float x, float y, float w, float h, unsigned int textureID) {
-        // Vertex format: x, y, u, v
-        float vertices[] = {
-            x,     y,     0.0f, 1.0f,
-            x + w, y,     1.0f, 1.0f,
-            x + w, y + h, 1.0f, 0.0f,
-            x,     y + h, 0.0f, 0.0f
-        };
+        if (textureID == 0) return;
 
+        float vertices[] = {
+            x,     y,     0.0f, 0.0f, // Top Left
+            x + w, y,     1.0f, 0.0f, // Top Right
+            x + w, y + h, 1.0f, 1.0f, // Bottom Right
+            x,     y + h, 0.0f, 1.0f  // Bottom Left
+        };
         unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 
         glUseProgram(shaderProgramTexture);
+
+        // Sync Matrices
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgramTexture, "uProjection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgramTexture, "uView"), 1, GL_FALSE, glm::value_ptr(view));
+
+        // Bind Texture
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
+        glUniform1i(glGetUniformLocation(shaderProgramTexture, "texture1"), 0);
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -473,16 +364,16 @@ void main() {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
 
-        // pos
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
-        // tex
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    }
 
+        glBindVertexArray(0);
+    }
+       
     // --- Input ---
     static int TranslateKey(int key) {
         if (key >= KEY_A && key <= KEY_Z)
@@ -506,30 +397,30 @@ void main() {
     }
 
     int IsKeyPressed(int key) {
-        if (!window) return 0;
+        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
 
-        int state = glfwGetKey(window, TranslateKey(key)) == GLFW_PRESS;
+        int state = glfwGetKey(GetDefaultWindow()->GetNativeHandle(), TranslateKey(key)) == GLFW_PRESS;
         int wasPressed = keyPreviousStates[key];
 
         keyPreviousStates[key] = state; // update state
 
         // only return true when key *just* pressed
-        return state && !wasPressed;
+        return    state && !wasPressed;
     }
 
     int IsKeyHeld(int key) {
-        if (!window) return 0;
-        int state = glfwGetKey(window, TranslateKey(key));
+        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
+        int state = glfwGetKey(GetDefaultWindow()->GetNativeHandle(), TranslateKey(key));
         return state == GLFW_REPEAT || state == GLFW_PRESS;
     }
 
     int IsMouseButtonPressed(int button) {
-        if (!window) return 0;
+        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
 
         int glfwButton = TranslateMouseButton(button);
         if (glfwButton == -1) return 0;
 
-        int state = glfwGetMouseButton(window, glfwButton) == GLFW_PRESS;
+        int state = glfwGetMouseButton(GetDefaultWindow()->GetNativeHandle(), glfwButton) == GLFW_PRESS;
         int wasPressed = mouseButtonPreviousStates[glfwButton];
 
         mouseButtonPreviousStates[glfwButton] = state;
@@ -538,12 +429,12 @@ void main() {
     }
 
     int IsMouseButtonHeld(int button) {
-        if (!window) return 0;
+        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
 
         int glfwButton = TranslateMouseButton(button);
         if (glfwButton == -1) return 0;
 
-        int state = glfwGetMouseButton(window, glfwButton);
+        int state = glfwGetMouseButton(GetDefaultWindow()->GetNativeHandle(), glfwButton);
         return state == GLFW_PRESS;
     }
 
@@ -612,24 +503,8 @@ void main() {
         return std::filesystem::remove(path);
     }
 
-    void SetFpsLimit(int fps) {
-        if (fps <= 0) {
-            targetFrameTime = 0.0; // disable limit
-        }
-        else {
-            targetFrameTime = 1.0 / static_cast<double>(fps);
-        }
-    }
 
-    void ApplyFpsLimit(double deltaTime) {
-        if (targetFrameTime <= 0.0) return; // unlimited FPS
-
-        double frameTime = deltaTime;
-        if (frameTime < targetFrameTime) {
-            double sleepTime = targetFrameTime - frameTime;
-            std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
-        }
-    }
+    
 
 
     Font::Font() : ttfBuffer(nullptr), bitmap(nullptr), textureID(0), fontHeight(0) {}
@@ -642,94 +517,69 @@ void main() {
         delete[] ttfBuffer;
         delete[] bitmap;
         if (textureID) glDeleteTextures(1, &textureID);
-    }
+    } 
 
     bool Font::Load(const std::string& path, float pixelHeight) {
         fontHeight = pixelHeight;
-        ttfBuffer = new unsigned char[1 << 20]; // 1MB
-        bitmap = new unsigned char[512 * 512];
-
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file) return false;
         std::streamsize size = file.tellg();
         file.seekg(0, std::ios::beg);
         ttfBuffer = new unsigned char[size];
-        if (!file.read((char*)ttfBuffer, size)) { /* error */ }
+        file.read((char*)ttfBuffer, size);
         file.close();
 
+        bitmap = new unsigned char[512 * 512];
+        // '1' at the end for OpenGL flipped Y
         stbtt_BakeFontBitmap(ttfBuffer, 0, pixelHeight, bitmap, 512, 512, 32, 96, cdata);
 
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // CRITICAL
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
         return true;
     }
 
     void Font::Draw(const std::string& text, float x, float y, Color color) {
-        if (!textureID) return;
+        if (!textureID || !shaderProgramText) return;
 
-        // We'll accumulate quad vertices (6 verts per glyph, each vert = 4 floats: x,y,u,v)
         std::vector<float> verts;
-        verts.reserve(text.size() * 6 * 4);
-
-        float xpos = x;
-        float ypos = y;
-
+        float xpos = x; float ypos = y;
         for (unsigned char ch : text) {
             if (ch < 32 || ch >= 128) continue;
             stbtt_aligned_quad q;
             stbtt_GetBakedQuad(cdata, 512, 512, ch - 32, &xpos, &ypos, &q, 1);
 
-            // two triangles: (x0,y0)-(x1,y0)-(x1,y1) and (x0,y0)-(x1,y1)-(x0,y1)
-            // vertex: x, y, u, v
-            // tri 1
-            verts.push_back(q.x0); verts.push_back(q.y0); verts.push_back(q.s0); verts.push_back(q.t0);
-            verts.push_back(q.x1); verts.push_back(q.y0); verts.push_back(q.s1); verts.push_back(q.t0);
-            verts.push_back(q.x1); verts.push_back(q.y1); verts.push_back(q.s1); verts.push_back(q.t1);
-            // tri 2
-            verts.push_back(q.x0); verts.push_back(q.y0); verts.push_back(q.s0); verts.push_back(q.t0);
-            verts.push_back(q.x1); verts.push_back(q.y1); verts.push_back(q.s1); verts.push_back(q.t1);
-            verts.push_back(q.x0); verts.push_back(q.y1); verts.push_back(q.s0); verts.push_back(q.t1);
+            verts.insert(verts.end(), {
+                q.x0, q.y0, q.s0, q.t0, q.x1, q.y0, q.s1, q.t0, q.x1, q.y1, q.s1, q.t1,
+                q.x0, q.y0, q.s0, q.t0, q.x1, q.y1, q.s1, q.t1, q.x0, q.y1, q.s0, q.t1
+                });
         }
 
-        if (verts.empty()) return;
-
-        // Use text shader (global shaderProgramText)
         glUseProgram(shaderProgramText);
+        glUniform3f(glGetUniformLocation(shaderProgramText, "textColor"), color.r, color.g, color.b);
 
-        // set uniforms: projection, view, textColor, atlas
-        GLint locProj = glGetUniformLocation(shaderProgramText, "uProjection");
-        GLint locView = glGetUniformLocation(shaderProgramText, "uView");
-        if (locProj != -1) glUniformMatrix4fv(locProj, 1, GL_FALSE, glm::value_ptr(projection));
-        if (locView != -1) glUniformMatrix4fv(locView, 1, GL_FALSE, glm::value_ptr(view));
-
-        GLint locColor = glGetUniformLocation(shaderProgramText, "textColor");
-        if (locColor != -1) glUniform3f(locColor, color.r, color.g, color.b);
-
-        // bind atlas to unit 0
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
-        GLint locAtlas = glGetUniformLocation(shaderProgramText, "textAtlas");
-        if (locAtlas != -1) glUniform1i(locAtlas, 0);
+        glUniform1i(glGetUniformLocation(shaderProgramText, "textAtlas"), 0);
 
-        // upload vertex data
         glBindVertexArray(textVAO);
         glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+        // Use glBufferData to avoid 1281 errors if the string is long
         glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_DYNAMIC_DRAW);
 
-        // draw
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)(verts.size() / 4));
-
-        // cleanup
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-        glUseProgram(0);
-    }
-
+    
+}
     void DrawText(Font& font, const std::string& text, float x, float y, Color color) {
         font.Draw(text, x, y, color);
+    }
+
+    void ShutDown()
+    {
+        glfwTerminate();
     }
 
 
