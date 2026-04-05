@@ -1,5 +1,5 @@
 #pragma once
-#include "Window/window.hpp"
+#include "window.hpp"
 
 namespace ech {
     Window*& GetDefaultWindow();
