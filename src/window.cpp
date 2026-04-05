@@ -1,4 +1,4 @@
-#include "Window/window.hpp"
+#include "window.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
