@@ -4,9 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp> // Optional if using glm::translate/rotate/scale
 #include <string>
 
-#include <stb_truetype/stb_truetype.h>
-
-#include "Window/window.hpp"
+#include <stb_truetype.h>
+#include "window.hpp"
 #include <internal.hpp>
 
 namespace ech {
