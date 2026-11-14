@@ -44,6 +44,17 @@ namespace ech {
     static std::chrono::high_resolution_clock::time_point lastFrameTime;
     static std::chrono::high_resolution_clock::time_point frameStart;
     static double targetFrameTime = 0.0;
+    static bool timingStarted = false;
+
+    // A default-constructed time_point sits at the clock's epoch, so the first frame
+    // would measure the time since that epoch instead of the frame.
+    static void BeginFrameTiming() {
+        frameStart = std::chrono::high_resolution_clock::now();
+        if (!timingStarted) {
+            lastFrameTime = frameStart;
+            timingStarted = true;
+        }
+    }
 
     glm::vec2 cameraPos(0.0f, 0.0f);
 
@@ -85,7 +96,7 @@ namespace ech {
     }
 
     void StartDrawing() {
-        frameStart = std::chrono::high_resolution_clock::now();
+        BeginFrameTiming();
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Sync Matrices for BOTH shaders
@@ -100,6 +111,8 @@ namespace ech {
     }
 
     void EndDrawing() {
+        if (!GetDefaultWindow()) return;
+
         glfwSwapBuffers(GetDefaultWindow()->GetNativeHandle());
         glfwPollEvents();
 
@@ -126,7 +139,7 @@ namespace ech {
 
     void StartDrawingAdv(Window& window)
     {
-        frameStart = std::chrono::high_resolution_clock::now(); // Use high_res for consistency
+        BeginFrameTiming();
 
         GLFWwindow* native = window.GetNativeHandle();
         glfwMakeContextCurrent(native);
@@ -196,6 +209,8 @@ namespace ech {
    // }
 
      void SetVSync(bool enabled) {
+         if (!GetDefaultWindow()) return;
+
          GLFWwindow* native = GetDefaultWindow()->GetNativeHandle();
          glfwMakeContextCurrent(native);
          glfwSwapInterval(enabled ? 1 : 0);
@@ -397,7 +412,7 @@ namespace ech {
     }
 
     int IsKeyPressed(int key) {
-        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
+        if (!GetDefaultWindow() || !GetDefaultWindow()->GetNativeHandle()) return 0;
 
         int state = glfwGetKey(GetDefaultWindow()->GetNativeHandle(), TranslateKey(key)) == GLFW_PRESS;
         int wasPressed = keyPreviousStates[key];
@@ -409,13 +424,13 @@ namespace ech {
     }
 
     int IsKeyHeld(int key) {
-        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
+        if (!GetDefaultWindow() || !GetDefaultWindow()->GetNativeHandle()) return 0;
         int state = glfwGetKey(GetDefaultWindow()->GetNativeHandle(), TranslateKey(key));
         return state == GLFW_REPEAT || state == GLFW_PRESS;
     }
 
     int IsMouseButtonPressed(int button) {
-        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
+        if (!GetDefaultWindow() || !GetDefaultWindow()->GetNativeHandle()) return 0;
 
         int glfwButton = TranslateMouseButton(button);
         if (glfwButton == -1) return 0;
@@ -429,7 +444,7 @@ namespace ech {
     }
 
     int IsMouseButtonHeld(int button) {
-        if (!GetDefaultWindow()->GetNativeHandle()) return 0;
+        if (!GetDefaultWindow() || !GetDefaultWindow()->GetNativeHandle()) return 0;
 
         int glfwButton = TranslateMouseButton(button);
         if (glfwButton == -1) return 0;
@@ -516,7 +531,8 @@ namespace ech {
     Font::~Font() {
         delete[] ttfBuffer;
         delete[] bitmap;
-        if (textureID) glDeleteTextures(1, &textureID);
+        // A Font declared in main() outlives Shutdown(); without a context this would crash.
+        if (textureID && glfwGetCurrentContext()) glDeleteTextures(1, &textureID);
     } 
 
     bool Font::Load(const std::string& path, float pixelHeight) {
