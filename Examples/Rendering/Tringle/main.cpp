@@ -2,29 +2,30 @@
 
 int main()
 {
-	int WindowWidth = 640; // Define a width for the window
+	int windowWidth = 640;  // Define a width for the window
 	int windowHeight = 360; // Define a height for the window
-	int TringleX = 320;// Define the X Position for the Tringle
-	int TringleY = 180; // Define the Y Postion for the Tringle
-	int TringleWidth = 50;// Define a width for the Tringle
-	int TringleHeight = 50; // Define a height for the Tringle
 
+	float triangleX = 320.0f;     // X position of the triangle's bottom-left corner
+	float triangleY = 180.0f;     // Y position of the triangle's baseline
+	float triangleWidth = 50.0f;  // Width of the baseline
+	float triangleHeight = 50.0f; // Positive height puts the apex below the baseline,
+	                              // negative height flips the triangle upward
 
-	ech::MakeWindow(WindowWidth, windowHeight, "Window example with echlib"); // Create the window
-	ech::SetTargetFps(60); // You dont have to put this for the window to work but you should so that the game always run at 60fps.
+	ech::CreateWindow(windowWidth, windowHeight, "Triangle example with echlib");
+	ech::SetFpsLimit(60);
+
+	ech::ClearBackground(ech::WHITE);
 
 	while (!ech::WindowShouldClose())
 	{
-		ech::StartDrawing();  // Start Drawing the window
+		ech::StartDrawing();
 
-		ech::DrawTriangle(TringleX, TringleY, TringleWidth, TringleHeight, ech::RED);
+		ech::DrawTriangle(triangleX, triangleY, triangleWidth, triangleHeight, ech::RED);
 
-		ech::ClearBackground(ech::WHITE); // Clear the Background With a color
-
-		ech::EndDrawing(); // End Drawing The window 
+		ech::EndDrawing();
 	}
 
-	ech::CloseWindow(); // Close Window
+	ech::CloseWindow();
+	ech::Shutdown();
 	return 0;
-
 }

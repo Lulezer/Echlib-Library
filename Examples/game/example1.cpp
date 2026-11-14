@@ -1,5 +1,5 @@
 // main.cpp
-#include "echlib.hpp"
+#include "echlib.h"
 #include <iostream>
 #include <vector>
 
@@ -8,7 +8,6 @@ int main() {
     const int SCREEN_W = 800;
     const int SCREEN_H = 600;
     ech::CreateWindow(SCREEN_W, SCREEN_H, "Echlib - Movement + Spikes Demo");
-    ech::InitGraphics();
     ech::SetFpsLimit(60);
 
     // Player
@@ -120,5 +119,6 @@ int main() {
     }
 
     ech::CloseWindow();
+    ech::Shutdown();
     return 0;
 }

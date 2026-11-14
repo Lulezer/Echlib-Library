@@ -1,35 +1,33 @@
-#include <echlib.h> // Include echlib for window and input management
+#include <echlib.h> // Window, drawing and input
+#include <raudio.h> // Audio. echlib does not include this for you
 
 int main()
 {
-    // Window setup
-    int WindowWidth = 640; // Width of the window
-    int WindowHeight = 360; // Height of the window
-    MakeWindow(WindowWidth, WindowHeight, "Audio Example with echlib"); // Create a window
-    SetTargetFps(60); // Set the target FPS for the game loop
+    int windowWidth = 640;
+    int windowHeight = 360;
 
-    // Audio setup
-    InitAudioDevice(); // Initialize the audio system
-    Sound soundEffect = LoadSound("song.wav"); // Load a sound effect file (e.g., "example.wav")
-    Music backgroundMusic = LoadMusicStream("sound.mp3"); // Load background music (e.g., "background.mp3")
-    PlayMusicStream(backgroundMusic); // Start playing the background music
+    ech::CreateWindow(windowWidth, windowHeight, "Audio example with echlib");
+    ech::SetFpsLimit(60);
 
+    InitAudioDevice(); // Initialize the audio device before loading any sound
 
-    // Main game loop
-    while (!WindowShouldClose()) // Check if the window should close
+    Sound soundEffect = LoadSound("song.wav");              // A short sound, kept in memory
+    Music backgroundMusic = LoadMusicStream("sound.mp3");   // A long track, streamed from disk
+    PlayMusicStream(backgroundMusic);
+
+    ech::ClearBackground(ech::WHITE);
+
+    while (!ech::WindowShouldClose())
     {
-        StartDrawing(); // Begin drawing the current frame
-
-        // Update the music stream to keep it playing
+        // A streamed track needs its buffers refilled every frame or it goes silent
         UpdateMusicStream(backgroundMusic);
 
-        // Detect key presses to control the audio
-        if (IsKeyPressed(KEY_SPACE)) // Play the sound effect when SPACE is pressed
+        if (ech::IsKeyPressed(ech::KEY_SPACE)) // Play the sound effect
         {
             PlaySound(soundEffect);
         }
 
-        if (IsKeyPressed(KEY_P)) // Pause or resume the background music with P
+        if (ech::IsKeyPressed(ech::KEY_P)) // Pause or resume the music
         {
             if (IsMusicPlaying(backgroundMusic))
                 PauseMusicStream(backgroundMusic);
@@ -37,21 +35,23 @@ int main()
                 ResumeMusicStream(backgroundMusic);
         }
 
-        if (IsKeyPressed(KEY_S)) // Stop the background music with S
+        if (ech::IsKeyPressed(ech::KEY_S)) // Stop the music
         {
             StopMusicStream(backgroundMusic);
         }
 
-        ClearBackground(WHITE); // Clear the window with a white background
+        ech::StartDrawing();
 
-        EndDrawing(); // End drawing the current frame
+        // Draw your game here
+
+        ech::EndDrawing();
     }
 
-    // Cleanup resources
-    UnloadSound(soundEffect); // Unload the sound effect
-    UnloadMusicStream(backgroundMusic); // Unload the background music
-    CloseAudioDevice(); // Close the audio system
-    CloseWindow(); // Close the window
+    UnloadSound(soundEffect);
+    UnloadMusicStream(backgroundMusic);
+    CloseAudioDevice();
+    ech::CloseWindow();
+    ech::Shutdown();
 
-    return 0; // Exit the program
+    return 0;
 }

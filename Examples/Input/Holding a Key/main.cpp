@@ -1,62 +1,38 @@
-#include <echlib.hpp> // Include the echlib library to use its functions for creating and managing windows, input, and drawing.
+#include <echlib.h> // Include echlib for the window, input and drawing functions
 
 int main()
 {
-    // Set the dimensions of the window
-    int WindowWidth = 640; // Width of the window in pixels
-    int WindowHeight = 360; // Height of the window in pixels
+    int windowWidth = 640;  // Width of the window in pixels
+    int windowHeight = 360; // Height of the window in pixels
 
-    // Variable to store the current background color state
-    // 1 = White, 2 = Blue, 3 = Red, 4 = Green
-    int color = 1;
+    float boxX = 300.0f;
+    float boxY = 160.0f;
+    float speed = 250.0f; // Pixels per second
 
-    // Create a window with the specified dimensions and a title
-    ech::CreateWindow(WindowWidth, WindowHeight, "Window example with echlib");
+    ech::CreateWindow(windowWidth, windowHeight, "Holding a key with echlib");
+    ech::SetFpsLimit(60); // EndDrawing() does the waiting for you
 
-	ech::SetFpsLimit(60); // Limit the frame rate to 60 frames per second
+    ech::ClearBackground(ech::WHITE);
 
-
-    // Main game loop: runs until the user closes the window
-    while (!ech::WindowShouldClose()) // Check if the window should close
+    while (!ech::WindowShouldClose())
     {
-        ech::StartDrawing(); // Begin the drawing phase for the current frame
+        // IsKeyHeld() is true every frame the key is down, which is what movement wants.
+        // Multiply by the delta time so the speed does not depend on the frame rate.
+        float dt = ech::GetDeltaTime();
 
-        // Check if the right arrow key is pressed (not held)
-        if (ech::IsKeyHeld(ech::KEY_A))
-        {
-            color += 1; // Increment the color variable to cycle to the next color
-        }
+        if (ech::IsKeyHeld(ech::KEY_A)) boxX -= speed * dt;
+        if (ech::IsKeyHeld(ech::KEY_D)) boxX += speed * dt;
+        if (ech::IsKeyHeld(ech::KEY_W)) boxY -= speed * dt; // Y grows downward
+        if (ech::IsKeyHeld(ech::KEY_S)) boxY += speed * dt;
 
-        // Update the background color based on the current color state
-        if (color == 1)
-        {
-            ech::ClearBackground(ech::WHITE); // Set background to white
-        }
-        else if (color == 2)
-        {
-            ech::ClearBackground(ech::LIGHT_BLUE); // Set background to blue
-        }
-        else if (color == 3)
-        {
-            ech::ClearBackground(ech::RED); // Set background to red
-        }
-        else if (color == 4)
-        {
-            ech::ClearBackground(ech::LIGHT_GREEN); // Set background to green
-        }
-        else if (color >= 5) // Reset the color cycle back to 1 after green
-        {
-            color = 1; // Start again from white
-        }
+        ech::StartDrawing();
 
-        ech::EndDrawing(); // End the drawing phase for the current frame
-        ech::ApplyFpsLimit(ech::GetDeltaTime());
+        ech::DrawRectangle(boxX, boxY, 40, 40, ech::RED);
 
+        ech::EndDrawing();
     }
 
-    // Close the window and release resources when the loop ends
     ech::CloseWindow();
-
-
-    return 0; // Exit the program successfully
+    ech::Shutdown();
+    return 0;
 }
