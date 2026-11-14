@@ -1051,6 +1051,8 @@ void WaveCrop(Wave *wave, int initSample, int finalSample)
 
         RL_FREE(wave->data);
         wave->data = data;
+        // Without this the wave still reports the old length and later reads run off the buffer.
+        wave->sampleCount = (unsigned int)sampleCount;
     }
     else TRACELOG(LOG_WARNING, "WAVE: Crop range out of bounds");
 }
