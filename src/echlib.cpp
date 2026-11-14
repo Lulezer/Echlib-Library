@@ -1,4 +1,4 @@
-#include "Echlib.hpp"
+#include "echlib.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -154,7 +154,7 @@ namespace ech {
     {
         glfwSwapBuffers(window.GetNativeHandle());
 
-        auto currentTime = std::chrono::steady_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
         deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
         lastFrameTime = currentTime;
 		glfwPollEvents();
@@ -466,7 +466,7 @@ namespace ech {
         view = t;
     }
 
-    bool ech::CheckCollision(float ax, float ay, float aw, float ah,
+    bool CheckCollision(float ax, float ay, float aw, float ah,
         float bx, float by, float bw, float bh) {
         return (ax < bx + bw) &&
             (ax + aw > bx) &&
@@ -577,7 +577,7 @@ namespace ech {
         font.Draw(text, x, y, color);
     }
 
-    void ShutDown()
+    void Shutdown()
     {
         glfwTerminate();
     }

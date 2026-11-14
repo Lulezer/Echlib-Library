@@ -96,9 +96,7 @@ namespace ech {
     void StartDrawingAdv(Window& window);
     void EndDrawingAdv(Window& window);
 
-    void BeginFrame();
     void PollEvents();
-    void EndFrame();
 
 
 
@@ -151,8 +149,8 @@ namespace ech {
     bool DeleteFile(const std::string& path);
 
     
+    // Frame pacing: set once, EndDrawing() does the waiting. 0 or less disables it.
     void SetFpsLimit(int fps);
-    void ApplyFpsLimit();   // no params
     
 
 

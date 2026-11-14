@@ -1,4 +1,5 @@
 #pragma once
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -24,7 +25,4 @@ namespace ech {
 
     unsigned int CreateShaderProgram(const char* vertexSrc, const char* fragmentSrc);
     void InitGraphics(GLFWwindow* window);
-
-    // Called each frame by StartDrawing
-    void UploadShapeUniforms();
 }
