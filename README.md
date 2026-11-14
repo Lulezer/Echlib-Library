@@ -1,70 +1,71 @@
 # Echlib
 
-A **C++ library** designed to help beginners start making games.  
-An easy-to-use and open-source **game development library**.
+Echlib is an open-source C++ game development library that I'm building to make creating games in C++ easier, especially for beginners.
 
+I originally started Echlib as a learning project, but over time it turned into something much bigger.
 
-- NOTE: I restarted Echlib from scratch because the previous version was messy, unoptimized, and difficult to extend.
-This new version features cleaner code and better performance, making it easier to build upon.
+**A little note about the rewrite:** I decided to rewrite Echlib from scratch because the old code was getting messy, unoptimized, and hard to work with. The new version has a much cleaner structure, better performance, and is easier to maintain and expand.
 
-## Features  
+## Features
 
-✔️ **Implemented** | ❌ **Planned / Under Consideration**  
+### Currently implemented
 
-- ✅ **Rendering System** (Textures, Shapes)  
-- ✅ **Audio System**  
-- ✅ **Keyboard & Mouse Input Handling**  
-- ✅ **2D Camera System**  
-- ✅ **Collision System** (Simplified collision handling)  
-- ✅ **File I/O System**  
-- ❌ **Scene Management System** (Planned)  
--  ✅**Text UI System**  
-- ❌ **Particle System** (Planned)  
-- ❌ **Script Integration & Event Handling** (Under Consideration)  
-- ❌ **Networking** (Under Consideration)  
-- ❌ **AI & Pathfinding** (Under Consideration)  
-- ❌ **Cross-Platform Support** (Planned)  
+- [x] Rendering (textures and shapes)
+- [x] Audio
+- [x] Keyboard and mouse input
+- [x] 2D camera
+- [x] Basic collision detection
+- [x] File I/O
+- [x] Text and UI
 
-> **Note:** Features may change over time. Some may be delayed or removed.
+### Planned
 
-## Future Vision  
+- [ ] Scene management
+- [ ] Particle system
+- [ ] Cross-platform support
 
-Echlib may **evolve into a full game engine** in the future, with more advanced features reserved for that version.  
+### Things I might add later
 
----
+- [ ] Scripting and event handling
+- [ ] Networking
+- [ ] AI and pathfinding
 
-## Installation  
+Nothing here is set in stone. I'll probably add, change, or remove things as development continues.
 
-### 📌 **Option 1: Manual Installation**  
+## What's next?
 
-1. **Download the latest release** from: [Echlib Releases](https://github.com/Lulezer/Echlib-Library/releases)  
-2. **Extract the ZIP file** into a folder on your computer.  
-3. **Copy the required files**:  
-   - Move the contents of the **`include/`** and **`src/`** folders into your project directory.  
-4. **Link the required files** in your IDE:  
-   - `echlib.h`, `raudio.h`, etc.  
-5. **Start coding!** 🎮  
+For now, my goal is to make Echlib a solid and easy-to-use game development library.
 
-### 🛠️ **Option 2: Use a Pre-Made Template**  
+Eventually, I'd love to turn it into a full game engine, but there's still a lot of work to do before that happens.
 
-- **Visual Studio 2022 Template:** [Download](https://github.com/Lulezer/Echlib-VisualStudio2022-Template)  
-  1. Download & extract the template.  
-  2. Right-click the folder → Open with **Visual Studio 2022**.  
-  3. Start coding!  
+## Getting started
 
----
+### Manual installation
 
-## 🏆 Credits  
+1. Download the latest version from the [Releases](https://github.com/Lulezer/Echlib-Library/releases) page.
+2. Extract the ZIP file.
+3. Copy the `include/` and `src/` folders into your project.
+4. Add the necessary source files and configure the include paths in your IDE or build system.
+5. Include `echlib.h` and you're ready to start.
 
-👤 **Special thanks to:**  
-- **[MrLLGD](https://www.youtube.com/@lowlevelgamedev9330/videos)** – Helped set up CMake and other technical aspects.  
-- **[Raysan5](https://github.com/raysan5)** – Creator of `raudio`.  
+### Visual Studio 2022 template
 
----
+If you don't want to set everything up manually, I've also made a [Visual Studio 2022 template](https://github.com/Lulezer/Echlib-VisualStudio2022-Template).
 
-## 📖 Wiki  
+1. Download and extract the template.
+2. Open it in Visual Studio 2022.
+3. Start making your game.
 
-For **detailed documentation**, visit the [Echlib Wiki](https://github.com/Lulezer/Echlib-Library/wiki) (Coming Soon).  
+## Credits
 
----
+A huge thanks to:
 
+- [MrLLGD (Low Level Game Dev)](https://www.youtube.com/@lowlevelgamedev9330/videos): For helping me with Echlib in its early days, teaching me a lot about OpenGL and CMake, going through my code with me, and sharing examples from his own library. Echlib probably wouldn't be where it is today without his help.
+
+- [Raysan5](https://github.com/raysan5): For creating `raudio`, which Echlib uses for audio.
+
+## Documentation
+
+I'm still working on the documentation. Once it's ready, you'll be able to find it on the [Echlib Wiki](https://github.com/Lulezer/Echlib-Library/wiki).
+
+Thanks for checking out Echlib!
