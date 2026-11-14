@@ -46,15 +46,7 @@ Eventually, I'd love to turn it into a full game engine, but there's still a lot
 2. Extract the ZIP file.
 3. Copy the `include/` and `src/` folders into your project.
 4. Add the necessary source files and configure the include paths in your IDE or build system.
-5. Include `echlib.h` and you're ready to start.
-
-### Visual Studio 2022 template
-
-If you don't want to set everything up manually, I've also made a [Visual Studio 2022 template](https://github.com/Lulezer/Echlib-VisualStudio2022-Template).
-
-1. Download and extract the template.
-2. Open it in Visual Studio 2022.
-3. Start making your game.
+5. Include `echlib.hpp` and you're ready to start.
 
 ## Credits
 
