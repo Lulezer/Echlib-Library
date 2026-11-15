@@ -1,0 +1,10 @@
+Entity: Player
+Transform: 400 300 120 120 0
+RectangleRenderer: 1 0 0 1
+EndEntity
+Entity: Text UI Object
+Transform: 646 140 111 143 0
+EndEntity
+Entity: Sprite Object
+Transform: 208 135 222 195 0
+EndEntity

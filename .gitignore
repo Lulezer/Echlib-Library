@@ -1,0 +1,24 @@
+# Build outputs
+/out/
+/build/
+bin/
+*.lib
+*.exe
+*.pdb
+*.ilk
+*.obj
+
+# IDE
+/.vs/
+**/.vs/
+.idea/
+*.user
+*.suo
+*.vcxproj.user
+CMakeSettings.json
+
+# OS
+Thumbs.db
+.DS_Store
+
+Makefile
