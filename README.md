@@ -38,7 +38,7 @@ if(WIN32)
 endif()
 ```
 
-A minimal consumer template is in the sibling folder `echlib-starter/` locally; push it as `Lulezer/echlib-starter` (see `docs/GITHUB_SYNC.md`).
+Minimal app template: [echlib-starter](https://github.com/Lulezer/echlib-starter).
 
 Override the library path without a submodule:
 
