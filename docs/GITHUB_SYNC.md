@@ -3,7 +3,7 @@
 One-time setup from `Echlib (Current)`:
 
 ```powershell
-cd "D:\Coding\C++ Libary Project\Echlib (Current)"
+  cd "YOUR FOLDER"
 git init
 git remote add origin https://github.com/Lulezer/Echlib-Library.git
 git fetch origin
