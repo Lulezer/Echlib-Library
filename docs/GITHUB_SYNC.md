@@ -3,7 +3,7 @@
 One-time setup from `Echlib (Current)`:
 
 ```powershell
-  cd "YOUR FOLDER"
+cd "YOUR FOLDER"
 git init
 git remote add origin https://github.com/Lulezer/Echlib-Library.git
 git fetch origin
